@@ -1,14 +1,14 @@
-# Data Forge Portfolio Case Study
+# Data Forge: портфельный case study
 
-## Status
+## Статус
 
-This repository is a fork used as a portfolio lab for modern Data Engineering workflows. The base stack comes from the upstream project; this fork is being converted into a reproducible applied case study with explicit contribution notes, validation queries, and run evidence.
+Этот репозиторий — fork, который используется как портфельная лаборатория по современным Data Engineering workflows. Базовый стек взят из upstream-проекта; в этом fork он превращается в воспроизводимый applied case study с явным описанием моего вклада, validation queries и run evidence.
 
-## Target Scenario
+## Целевой сценарий
 
 **Retail CDC to lakehouse and analytics.**
 
-The applied case will model a small retail system where operational changes are captured from Postgres, streamed through Kafka/Debezium, landed into lakehouse storage, and queried through analytical engines.
+Applied case моделирует небольшую retail-систему: операционные изменения захватываются из Postgres, проходят через Kafka/Debezium, приземляются в lakehouse-хранилище и доступны для аналитических запросов.
 
 ```mermaid
 flowchart LR
@@ -22,20 +22,20 @@ flowchart LR
     G --> H
 ```
 
-## My Contribution in This Fork
+## My Contribution in This Fork / Мой вклад в этом fork
 
-- Added a retail CDC/lakehouse runbook: [docs/retail-cdc-runbook.md](docs/retail-cdc-runbook.md).
-- Added source-system validation SQL: [sql/validation/postgres_retail_seed_checks.sql](sql/validation/postgres_retail_seed_checks.sql).
-- Added Kafka validation checklist: [sql/validation/kafka_topic_inventory.md](sql/validation/kafka_topic_inventory.md).
-- Added analytical example queries for Postgres, ClickHouse, and Trino under [sql/examples/](sql/examples/).
-- Added an evidence capture contract under [docs/assets/](docs/assets/).
-- Added a ClickHouse Kafka ingestion contract with source tables, materialized views, and CI-backed validation: [sql/validation/clickhouse_ingestion_contract.md](sql/validation/clickhouse_ingestion_contract.md).
-- Added a generated static evidence bundle: [docs/evidence/retail-cdc-evidence.md](docs/evidence/retail-cdc-evidence.md).
-- Kept the README honest about fork origin and current limitations.
+- Добавил retail CDC/lakehouse runbook: [docs/retail-cdc-runbook.md](docs/retail-cdc-runbook.md).
+- Добавил validation SQL для source system: [sql/validation/postgres_retail_seed_checks.sql](sql/validation/postgres_retail_seed_checks.sql).
+- Добавил Kafka validation checklist: [sql/validation/kafka_topic_inventory.md](sql/validation/kafka_topic_inventory.md).
+- Добавил аналитические SQL-примеры для Postgres, ClickHouse и Trino в [sql/examples/](sql/examples/).
+- Добавил evidence capture contract в [docs/assets/](docs/assets/).
+- Добавил ClickHouse Kafka ingestion contract с source tables, materialized views и CI-backed validation: [sql/validation/clickhouse_ingestion_contract.md](sql/validation/clickhouse_ingestion_contract.md).
+- Добавил сгенерированный static evidence bundle: [docs/evidence/retail-cdc-evidence.md](docs/evidence/retail-cdc-evidence.md).
+- Оставил README честным: явно указал происхождение fork и текущие ограничения.
 
-## Validation Contract
+## Validation Contract / Контракт валидации
 
-The case study now has three layers of validation:
+В case study сейчас несколько слоёв проверки:
 
 | Layer | Evidence | File |
 | --- | --- | --- |
@@ -44,18 +44,18 @@ The case study now has three layers of validation:
 | Analytics | retail profile, realtime sales, lakehouse quality examples | `sql/examples/` |
 | Runtime contract | Compose env names, generator config, DAG topics, Debezium/Postgres CDC tables, ClickHouse sink tables | `scripts/validate_runtime_contract.py` |
 | ClickHouse ingestion | Kafka Engine tables, consumer groups, materialized views into analytics tables | `infra/clickhouse/init/002_kafka_event_ingestion.sql` |
-| Static evidence bundle | generated topic/table/validation summary for reviewers | `docs/evidence/retail-cdc-evidence.md` |
+| Static evidence bundle | сгенерированная сводка по topics/tables/validation для reviewer-friendly проверки | `docs/evidence/retail-cdc-evidence.md` |
 
-## Acceptance Criteria
+## Acceptance criteria
 
-- A reviewer can run one local scenario with Docker Compose using `docs/retail-cdc-runbook.md`.
-- The case study explains what changed in this fork versus upstream.
-- The repo includes validation SQL/checklists for ingestion, analytical query output, and data quality checks.
-- The project is presented as a learning lab until captured run evidence is added.
+- Reviewer может запустить один локальный сценарий через Docker Compose по [docs/retail-cdc-runbook.md](docs/retail-cdc-runbook.md).
+- Case study объясняет, что изменено в этом fork относительно upstream.
+- В репозитории есть validation SQL/checklists для ingestion, аналитических запросов и data quality checks.
+- Проект называется learning lab до тех пор, пока live run evidence не будет зафиксирован в репозитории.
 
-## Next Backlog
+## Ближайший backlog
 
-1. Run the full stack and capture screenshots/logs under `docs/assets/`.
-2. Add Kafka-to-lakehouse ingestion jobs for raw bronze events.
-3. Add a lighter smoke profile for Kafka, Schema Registry, ClickHouse, and the generator.
-4. Promote the repo from `lab` to `applied case study` only after live run evidence is committed.
+1. Запустить полный стек и сохранить screenshots/logs в `docs/assets/`.
+2. Добавить Kafka-to-lakehouse ingestion jobs для raw bronze events.
+3. Добавить лёгкий smoke profile для Kafka, Schema Registry, ClickHouse и generator.
+4. Перевести репозиторий из `lab` в `applied case study` только после коммита live run evidence.

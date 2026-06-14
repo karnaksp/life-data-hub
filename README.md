@@ -1,60 +1,60 @@
 # 🔥 Data Forge — Data Engineering Playground
 
-Your modern data stack playground. Spin up core components of a real data platform and practice end‑to‑end workflows locally.
+Локальная площадка для современного data stack. Здесь можно поднять основные компоненты реальной data platform и отработать end-to-end workflows без облачных счетов и production-риска.
 
-> Portfolio note: this repository is a fork used as a Data Engineering lab. I am converting it into an applied retail CDC/lakehouse case study with a reproducible runbook, validation SQL, and explicit contribution notes. See [CASE_STUDY.md](CASE_STUDY.md).
+> Portfolio Case Study: этот репозиторий — fork, который я использую как Data Engineering lab. Я превращаю его в applied retail CDC/lakehouse case study с воспроизводимым runbook, validation SQL и явным описанием моего вклада. См. [CASE_STUDY.md](CASE_STUDY.md).
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Docker](https://img.shields.io/badge/Docker-20.10+-blue.svg)](https://www.docker.com/)
 [![Docker Compose](https://img.shields.io/badge/Docker%20Compose-2.0+-blue.svg)](https://docs.docker.com/compose/)
 
-Instead of just reading about "data lakes" or "lakehouses," you actually get to run them. Think of it as a **gym for data engineers** without cloud bills or production risk.
+Вместо того чтобы только читать про "data lakes" и "lakehouses", здесь их можно реально запустить. Это инженерный тренажёр для data engineers: локально, прозрачно и без риска сломать production.
 
 ---
 
-## 🎯 What's Inside
+## 🎯 Что внутри
 
-Data Forge includes a complete modern data stack with industry-standard tools:
+Data Forge включает полный современный data stack на привычных индустриальных инструментах:
 
 ### 🗄️ Storage & Catalog
-- **MinIO** → S3-compatible object storage for data lakes
-- **Hive Metastore** → Centralized metadata catalog for tables and schemas
+- **MinIO** → S3-compatible object storage для data lakes
+- **Hive Metastore** → централизованный metadata catalog для таблиц и схем
 
 ### ⚡ Compute Engines
-- **Trino** → Interactive SQL query engine for federated analytics
-- **Apache Spark** → Distributed processing for batch and streaming workloads
+- **Trino** → interactive SQL query engine для federated analytics
+- **Apache Spark** → distributed processing для batch и streaming workloads
 
 ### 🌊 Streaming & CDC
-- **Apache Kafka** → Event streaming platform
-- **Schema Registry** → Schema evolution and compatibility  
-- **Debezium** → Change data capture from databases
+- **Apache Kafka** → event streaming platform
+- **Schema Registry** → schema evolution and compatibility
+- **Debezium** → change data capture из баз данных
 
 ### 🗃️ Databases
-- **PostgreSQL** → Primary OLTP database (source system)
-- **ClickHouse** → Columnar analytics database (sink)
+- **PostgreSQL** → primary OLTP database (source system)
+- **ClickHouse** → columnar analytics database (sink)
 
 ### 🔄 Orchestration
-- **Apache Airflow 3** → Workflow orchestration
+- **Apache Airflow 3** → workflow orchestration
 
 ### 📊 Visualization & Exploration
-- **Apache Superset** → Modern BI and data visualization
-- **JupyterLab** → Interactive data science environment
+- **Apache Superset** → modern BI и data visualization
+- **JupyterLab** → interactive data science environment
 
 ### 🏭 Data Generation
-- **Data Generator** → Realistic retail data producer for Kafka topics and Postgres tables (see [infra/data-generator/README.md](infra/data-generator/README.md))
+- **Data Generator** → реалистичный retail data producer для Kafka topics и Postgres tables (см. [infra/data-generator/README.md](infra/data-generator/README.md))
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Быстрый старт
 
-### Prerequisites
+### Требования
 
 - **Docker** 20.10+ 
 - **Docker Compose** 2.0+
-- **8GB+ RAM** recommended
-- **20GB+ disk space** for all services
+- **8GB+ RAM** рекомендуется
+- **20GB+ disk space** для всех сервисов
 
-### 1. Clone & Configure
+### 1. Склонировать и настроить
 
 ```bash
 git clone https://github.com/karnaksp/data-forge.git
@@ -67,7 +67,7 @@ cp .env.example .env
 nano .env
 ```
 
-### 2. Start Core Services
+### 2. Запустить core services
 
 ```bash
 # Start essential data stack (MinIO, Postgres, ClickHouse, etc.)
@@ -77,7 +77,7 @@ docker compose --profile core up -d
 docker compose ps
 ```
 
-### 3. Add Compute & Orchestration
+### 3. Добавить compute и orchestration
 
 ```bash
 # Add Airflow for orchestration
@@ -90,7 +90,7 @@ docker compose --profile explore up -d
 docker compose --profile datagen up -d
 ```
 
-### 4. Access the Stack
+### 4. Открыть сервисы
 
 | Service | URL | Default Login |
 |---------|-----|---------------|
@@ -102,40 +102,40 @@ docker compose --profile datagen up -d
 
 ---
 
-## 🧩 Architecture Profiles
+## 🧩 Architecture profiles
 
-See [docs/architecture.md](docs/architecture.md) for profile details and commands.
+Подробности по профилям и командам — в [docs/architecture.md](docs/architecture.md).
 
-## 🧪 Portfolio Case Study
+## 🧪 Portfolio case study
 
-The applied scenario is **retail CDC to lakehouse and realtime analytics**:
+Applied scenario: **retail CDC to lakehouse and realtime analytics**.
 
 - source tables: `users`, `products`, `warehouses`, `suppliers`, `inventory`, `warehouse_inventory`, `customer_segments`, `product_suppliers`;
 - business-event topics: `orders.v1`, `payments.v1`, `shipments.v1`, `inventory-changes.v1`, `customer-interactions.v1`;
-- CDC topics: `demo.public.*` from Postgres through Debezium;
-- validation: source counts, duplicate keys, referential integrity, Kafka topic inventory, ClickHouse ingestion wiring, and analytical query examples.
+- CDC topics: `demo.public.*` из Postgres через Debezium;
+- validation: source counts, duplicate keys, referential integrity, Kafka topic inventory, ClickHouse ingestion wiring и analytical query examples.
 
-Start here:
+Начинать лучше отсюда:
 
-- [CASE_STUDY.md](CASE_STUDY.md) - fork scope, contribution notes, and acceptance criteria.
-- [docs/retail-cdc-runbook.md](docs/retail-cdc-runbook.md) - reproducible local scenario.
+- [CASE_STUDY.md](CASE_STUDY.md) - scope fork, мой вклад и acceptance criteria.
+- [docs/retail-cdc-runbook.md](docs/retail-cdc-runbook.md) - воспроизводимый локальный сценарий.
 - [sql/validation/postgres_retail_seed_checks.sql](sql/validation/postgres_retail_seed_checks.sql) - source-system data quality checks.
 - [sql/validation/kafka_topic_inventory.md](sql/validation/kafka_topic_inventory.md) - streaming validation checklist.
-- [sql/validation/clickhouse_ingestion_contract.md](sql/validation/clickhouse_ingestion_contract.md) - Kafka-to-ClickHouse ingestion contract and runtime smoke commands.
-- [docs/evidence/retail-cdc-evidence.md](docs/evidence/retail-cdc-evidence.md) - generated static evidence bundle for reviewer-friendly inspection.
-- [sql/examples/](sql/examples/) - Postgres, ClickHouse, and Trino example queries.
+- [sql/validation/clickhouse_ingestion_contract.md](sql/validation/clickhouse_ingestion_contract.md) - Kafka-to-ClickHouse ingestion contract и runtime smoke commands.
+- [docs/evidence/retail-cdc-evidence.md](docs/evidence/retail-cdc-evidence.md) - сгенерированный static evidence bundle для удобной reviewer-проверки.
+- [sql/examples/](sql/examples/) - SQL-примеры для Postgres, ClickHouse и Trino.
 
 ---
 
-## 📚 Learning Path
+## 📚 Learning path
 
-Follow [docs/learning-path.md](docs/learning-path.md) for a concise, runnable sequence of notebooks.
+Короткая воспроизводимая последовательность notebooks описана в [docs/learning-path.md](docs/learning-path.md).
 
 ---
 
-## 🛠️ Development
+## 🛠️ Разработка
 
-See [docs/development.md](docs/development.md) for project layout, env vars, and contribution tips.
+Project layout, env vars и советы по изменениям — в [docs/development.md](docs/development.md).
 
 Portfolio quality checks:
 
@@ -149,15 +149,15 @@ docker compose --env-file .env.example -f docker-compose.yml -f docker-compose.e
 
 ## 🤝 Contributing
 
-- Open issues or PRs with clear scope and steps.
-- Follow the docs style: [docs/guidelines.md](docs/guidelines.md).
-- Test changes with the relevant compose profiles.
+- Открывайте issues или PRs с понятным scope и шагами проверки.
+- Соблюдайте docs style: [docs/guidelines.md](docs/guidelines.md).
+- Проверяйте изменения через релевантные compose profiles.
 
 ---
 
 ## 📄 License
 
-MIT — see `LICENSE`. See service docs for third‑party licenses.
+MIT — см. `LICENSE`. Лицензии сторонних сервисов указаны в их документации.
 
 ---
 
@@ -191,14 +191,14 @@ Service docs (direct links):
 
 ## 🙏 Acknowledgments
 
-Built on the shoulders of open‑source communities: Apache (Airflow, Spark, Kafka, Trino), ClickHouse, MinIO, Jupyter, Superset, Redis.
+Проект опирается на open-source communities: Apache (Airflow, Spark, Kafka, Trino), ClickHouse, MinIO, Jupyter, Superset, Redis.
 
 ---
 
-*The project name "Forge" fits: it's a place where raw metal (data) is hammered into something structured and useful, with you as the smith learning the craft.* ⚒️
+*Название "Forge" подходит проекту: это место, где сырой материал (data) превращается во что-то структурированное и полезное, а разработчик оттачивает ремесло.* ⚒️
 
 ---
 
 ## 🏭 Data Generation
 
-See [infra/data-generator/README.md](infra/data-generator/README.md) for usage and configuration.
+Usage и configuration описаны в [infra/data-generator/README.md](infra/data-generator/README.md).
