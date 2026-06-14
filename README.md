@@ -2,7 +2,7 @@
 
 Локальная площадка для современного data stack. Здесь можно поднять основные компоненты реальной data platform и отработать end-to-end workflows без облачных счетов и production-риска.
 
-> Portfolio note: этот репозиторий — fork, который я использую как Data Engineering lab. Я превращаю его в applied retail CDC/lakehouse case study с воспроизводимым runbook, validation SQL и явным описанием моего вклада. См. [CASE_STUDY.md](CASE_STUDY.md).
+> Portfolio Case Study: этот репозиторий — fork, который я использую как Data Engineering lab. Я превращаю его в applied retail CDC/lakehouse case study с воспроизводимым runbook, validation SQL и явным описанием моего вклада. См. [CASE_STUDY.md](CASE_STUDY.md).
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Docker](https://img.shields.io/badge/Docker-20.10+-blue.svg)](https://www.docker.com/)

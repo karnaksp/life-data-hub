@@ -22,7 +22,7 @@ flowchart LR
     G --> H
 ```
 
-## Мой вклад в этом fork
+## My Contribution in This Fork / Мой вклад в этом fork
 
 - Добавил retail CDC/lakehouse runbook: [docs/retail-cdc-runbook.md](docs/retail-cdc-runbook.md).
 - Добавил validation SQL для source system: [sql/validation/postgres_retail_seed_checks.sql](sql/validation/postgres_retail_seed_checks.sql).
@@ -33,7 +33,7 @@ flowchart LR
 - Добавил сгенерированный static evidence bundle: [docs/evidence/retail-cdc-evidence.md](docs/evidence/retail-cdc-evidence.md).
 - Оставил README честным: явно указал происхождение fork и текущие ограничения.
 
-## Validation contract
+## Validation Contract / Контракт валидации
 
 В case study сейчас несколько слоёв проверки:
 
