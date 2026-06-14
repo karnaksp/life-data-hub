@@ -22,4 +22,5 @@ Why: Columnar analytics database for fast OLAP queries.
 ## 📝 Notes
 
 - Config files mounted: [config.xml](config.xml), [users.xml](users.xml).
+- Init SQL mounted from [init/](init/) creates the `analytics` database and retail event sink tables for `orders`, `payments`, and `inventory_changes`.
 - Data persisted in `clickhouse-data` volume.

@@ -339,6 +339,7 @@ services:
       - clickhouse-data:/var/lib/clickhouse
       - ./infra/clickhouse/config.xml:/etc/clickhouse-server/config.xml
       - ./infra/clickhouse/users.xml:/etc/clickhouse-server/users.xml
+      - ./infra/clickhouse/init:/docker-entrypoint-initdb.d:ro
     environment:
       - CLICKHOUSE_USER=${CLICKHOUSE_USER}
       - CLICKHOUSE_PASSWORD=${CLICKHOUSE_PASSWORD}
