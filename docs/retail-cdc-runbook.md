@@ -139,7 +139,18 @@ Use the SQL examples after the corresponding sinks or query engines are wired:
 | `sql/examples/clickhouse_realtime_sales.sql` | ClickHouse | Realtime event analytics pattern |
 | `sql/examples/trino_lakehouse_quality.sql` | Trino | Lakehouse bronze quality pattern |
 
-The ClickHouse and Trino examples are intentionally written as target-state queries. Keep the table names aligned with the ingestion jobs you add in the next implementation pass.
+The ClickHouse example is wired through Kafka Engine source tables and materialized views in `infra/clickhouse/init/002_kafka_event_ingestion.sql`. Use `sql/validation/clickhouse_ingestion_contract.md` for the short runtime smoke commands. The Trino example remains a target-state lakehouse query until the raw Bronze ingestion evidence is finalized.
+
+### 7. Review Static Evidence
+
+Generate and inspect the Docker-free evidence bundle:
+
+```bash
+python scripts/generate_evidence_bundle.py
+python scripts/validate_project.py
+```
+
+Open `docs/evidence/retail-cdc-evidence.md` to review the current topic, table, materialized-view, and validation-command contract.
 
 ## Evidence to Capture
 
@@ -151,6 +162,8 @@ When the stack runs successfully, capture these screenshots or logs under `docs/
 | Data generator logs showing seed + target EPS | `generator-logs.png` |
 | Postgres validation query output | `postgres-validation.png` |
 | Trino or ClickHouse analytical query output | `analytics-query.png` |
+| ClickHouse table list | `clickhouse-show-tables.txt` |
+| ClickHouse event counts | `clickhouse-orders-count.txt`, `clickhouse-payments-count.txt`, `clickhouse-inventory-count.txt` |
 
 ## Stop and Clean Up
 
@@ -167,6 +180,7 @@ docker compose --profile core --profile datagen down -v
 
 ## Known Limitations
 
-- This runbook documents the applied case and validation contract. It does not yet prove that every sink is implemented end-to-end.
-- Trino and ClickHouse example queries may need table-name adjustment after the ingestion jobs are finalized.
+- This runbook documents the applied case and validation contract. It does not yet prove that every sink has live run evidence.
+- The ClickHouse ingestion contract is statically validated; runtime proof still requires local row-count logs after generator events are produced.
+- The Trino example query may need table-name adjustment after the lakehouse ingestion jobs are finalized.
 - The project remains a fork/lab until the next pass adds original ingestion jobs and captured run evidence.

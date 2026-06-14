@@ -113,7 +113,7 @@ The applied scenario is **retail CDC to lakehouse and realtime analytics**:
 - source tables: `users`, `products`, `warehouses`, `suppliers`, `inventory`, `warehouse_inventory`, `customer_segments`, `product_suppliers`;
 - business-event topics: `orders.v1`, `payments.v1`, `shipments.v1`, `inventory-changes.v1`, `customer-interactions.v1`;
 - CDC topics: `demo.public.*` from Postgres through Debezium;
-- validation: source counts, duplicate keys, referential integrity, Kafka topic inventory, and analytical query examples.
+- validation: source counts, duplicate keys, referential integrity, Kafka topic inventory, ClickHouse ingestion wiring, and analytical query examples.
 
 Start here:
 
@@ -121,6 +121,8 @@ Start here:
 - [docs/retail-cdc-runbook.md](docs/retail-cdc-runbook.md) - reproducible local scenario.
 - [sql/validation/postgres_retail_seed_checks.sql](sql/validation/postgres_retail_seed_checks.sql) - source-system data quality checks.
 - [sql/validation/kafka_topic_inventory.md](sql/validation/kafka_topic_inventory.md) - streaming validation checklist.
+- [sql/validation/clickhouse_ingestion_contract.md](sql/validation/clickhouse_ingestion_contract.md) - Kafka-to-ClickHouse ingestion contract and runtime smoke commands.
+- [docs/evidence/retail-cdc-evidence.md](docs/evidence/retail-cdc-evidence.md) - generated static evidence bundle for reviewer-friendly inspection.
 - [sql/examples/](sql/examples/) - Postgres, ClickHouse, and Trino example queries.
 
 ---

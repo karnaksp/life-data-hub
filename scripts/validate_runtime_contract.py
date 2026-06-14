@@ -25,6 +25,7 @@ KAFKA_CHECKLIST_PATH = ROOT / "sql/validation/kafka_topic_inventory.md"
 DEBEZIUM_CONFIG_PATH = ROOT / "infra/debezium/config/demo-postgres.json"
 POSTGRES_INIT_PATH = ROOT / "infra/postgres/init-databases.sh"
 CLICKHOUSE_INIT_PATH = ROOT / "infra/clickhouse/init/001_retail_event_sinks.sql"
+CLICKHOUSE_INGESTION_PATH = ROOT / "infra/clickhouse/init/002_kafka_event_ingestion.sql"
 CLICKHOUSE_EXAMPLE_PATH = ROOT / "sql/examples/clickhouse_realtime_sales.sql"
 
 REQUIRED_GENERATOR_ENV = {
@@ -190,6 +191,43 @@ def clickhouse_example_tables() -> set[str]:
     return set(re.findall(r"analytics\.([A-Za-z_][A-Za-z0-9_]*)", text))
 
 
+def clickhouse_kafka_ingestion_contract() -> dict[str, dict[str, str]]:
+    text = CLICKHOUSE_INGESTION_PATH.read_text(encoding="utf-8")
+    contract: dict[str, dict[str, str]] = {}
+    table_blocks = re.finditer(
+        r"CREATE TABLE IF NOT EXISTS analytics\.kafka_([A-Za-z_][A-Za-z0-9_]*)"
+        r".*?ENGINE = Kafka.*?SETTINGS(?P<settings>.*?);",
+        text,
+        re.DOTALL,
+    )
+    for match in table_blocks:
+        source_table = match.group(1)
+        settings = match.group("settings")
+        topic = re.search(r"kafka_topic_list\s*=\s*'([^']+)'", settings)
+        group = re.search(r"kafka_group_name\s*=\s*'([^']+)'", settings)
+        contract[source_table] = {
+            "topic": topic.group(1) if topic else "",
+            "group": group.group(1) if group else "",
+        }
+    return contract
+
+
+def clickhouse_materialized_view_targets() -> dict[str, str]:
+    text = CLICKHOUSE_INGESTION_PATH.read_text(encoding="utf-8")
+    views: dict[str, str] = {}
+    for match in re.finditer(
+        r"CREATE MATERIALIZED VIEW IF NOT EXISTS analytics\.mv_kafka_"
+        r"([A-Za-z_][A-Za-z0-9_]*)_to_([A-Za-z_][A-Za-z0-9_]*)\s+"
+        r"TO analytics\.([A-Za-z_][A-Za-z0-9_]*)",
+        text,
+    ):
+        source_table, named_target, actual_target = match.groups()
+        views[source_table] = actual_target
+        if named_target != actual_target:
+            views[f"{source_table}__name_mismatch"] = named_target
+    return views
+
+
 def validate_generator_env() -> list[str]:
     failures: list[str] = []
     env = compose_generator_env()
@@ -274,14 +312,69 @@ def validate_debezium_and_postgres() -> list[str]:
 
 
 def validate_clickhouse_contract() -> list[str]:
+    failures: list[str] = []
     init_tables = clickhouse_init_tables()
     example_tables = clickhouse_example_tables()
     missing = example_tables - init_tables
     if missing:
-        return [
+        failures.append(
             f"{relative(CLICKHOUSE_INIT_PATH)} does not create example tables: {sorted(missing)}"
-        ]
-    return []
+        )
+
+    ingestion = clickhouse_kafka_ingestion_contract()
+    views = clickhouse_materialized_view_targets()
+    expected = {
+        "orders": "orders.v1",
+        "payments": "payments.v1",
+        "inventory_changes": "inventory-changes.v1",
+    }
+    topics = config_business_topics(config_env_defaults())
+    for table, topic in expected.items():
+        source = ingestion.get(table)
+        if not source:
+            failures.append(
+                f"{relative(CLICKHOUSE_INGESTION_PATH)} is missing Kafka source table "
+                f"analytics.kafka_{table}"
+            )
+            continue
+        if source["topic"] != topic:
+            failures.append(
+                f"{relative(CLICKHOUSE_INGESTION_PATH)} analytics.kafka_{table} "
+                f"uses topic {source['topic']!r}, expected {topic!r}"
+            )
+        if source["topic"] not in topics:
+            failures.append(
+                f"{relative(CLICKHOUSE_INGESTION_PATH)} analytics.kafka_{table} "
+                f"uses topic not produced by the generator: {source['topic']!r}"
+            )
+        expected_group = f"clickhouse_{table}_sink_v1"
+        if source["group"] != expected_group:
+            failures.append(
+                f"{relative(CLICKHOUSE_INGESTION_PATH)} analytics.kafka_{table} "
+                f"uses group {source['group']!r}, expected {expected_group!r}"
+            )
+        if views.get(table) != table:
+            failures.append(
+                f"{relative(CLICKHOUSE_INGESTION_PATH)} is missing materialized view "
+                f"from analytics.kafka_{table} to analytics.{table}"
+            )
+
+    mismatches = [key for key in views if key.endswith("__name_mismatch")]
+    for key in mismatches:
+        source = key.removesuffix("__name_mismatch")
+        failures.append(
+            f"{relative(CLICKHOUSE_INGESTION_PATH)} materialized view name for "
+            f"analytics.kafka_{source} does not match its TO table"
+        )
+
+    uncovered = (example_tables & set(expected)) - set(ingestion)
+    if uncovered:
+        failures.append(
+            f"{relative(CLICKHOUSE_INGESTION_PATH)} does not cover example tables: "
+            f"{sorted(uncovered)}"
+        )
+
+    return failures
 
 
 def validate_runtime_contract() -> list[str]:

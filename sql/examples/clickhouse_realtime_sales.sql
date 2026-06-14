@@ -1,6 +1,6 @@
 -- Target-state realtime sales examples.
 -- Engine: ClickHouse.
--- Adjust table/database names to match the Kafka-to-ClickHouse ingestion job.
+-- Tables are populated by infra/clickhouse/init/002_kafka_event_ingestion.sql.
 
 select
     toStartOfMinute(event_time) as minute,

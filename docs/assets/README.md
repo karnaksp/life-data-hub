@@ -8,5 +8,10 @@ Recommended files:
 - `generator-logs.png` - data generator logs showing seed counts and target EPS.
 - `postgres-validation.png` - output from `sql/validation/postgres_retail_seed_checks.sql`.
 - `analytics-query.png` - Trino or ClickHouse query output after ingestion jobs are wired.
+- `clickhouse-show-tables.txt` - `SHOW TABLES FROM analytics` after ClickHouse starts.
+- `clickhouse-orders-count.txt` - row count for `analytics.orders` after generator events.
+- `clickhouse-payments-count.txt` - row count for `analytics.payments` after generator events.
+- `clickhouse-inventory-count.txt` - row count for `analytics.inventory_changes` after generator events.
+- `clickhouse-ingestion-log.txt` - relevant ClickHouse or Docker logs for ingestion review.
 
-Do not commit screenshots containing secrets, local tokens, private URLs, or personal data.
+Text logs are preferred for PR review because they are diffable. Do not commit screenshots or logs containing secrets, local tokens, private URLs, or personal data.

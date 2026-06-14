@@ -7,6 +7,7 @@ import re
 from pathlib import Path
 
 from validate_bronze_contract import validate_bronze_contract
+from generate_evidence_bundle import EVIDENCE_PATH, render_evidence_bundle
 from validate_runtime_contract import validate_runtime_contract
 
 
@@ -16,8 +17,10 @@ REQUIRED_FILES = [
     "CASE_STUDY.md",
     "docs/retail-cdc-runbook.md",
     "docs/assets/README.md",
+    "docs/evidence/retail-cdc-evidence.md",
     "sql/validation/postgres_retail_seed_checks.sql",
     "sql/validation/kafka_topic_inventory.md",
+    "sql/validation/clickhouse_ingestion_contract.md",
     "sql/examples/postgres_retail_profile.sql",
     "sql/examples/clickhouse_realtime_sales.sql",
     "sql/examples/trino_lakehouse_quality.sql",
@@ -96,12 +99,24 @@ def validate_case_study_framing() -> list[str]:
     return failures
 
 
+def validate_evidence_bundle() -> list[str]:
+    expected = render_evidence_bundle()
+    actual = EVIDENCE_PATH.read_text(encoding="utf-8") if EVIDENCE_PATH.exists() else ""
+    if actual != expected:
+        return [
+            "docs/evidence/retail-cdc-evidence.md is stale; "
+            "run python scripts/generate_evidence_bundle.py"
+        ]
+    return []
+
+
 def main() -> int:
     failures: list[str] = []
     failures.extend(validate_required_files())
     failures.extend(validate_markdown_links())
     failures.extend(validate_sql_files())
     failures.extend(validate_case_study_framing())
+    failures.extend(validate_evidence_bundle())
     failures.extend(validate_bronze_contract())
     failures.extend(validate_runtime_contract())
 

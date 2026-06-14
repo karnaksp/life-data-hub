@@ -22,5 +22,6 @@ Why: Columnar analytics database for fast OLAP queries.
 ## 📝 Notes
 
 - Config files mounted: [config.xml](config.xml), [users.xml](users.xml).
-- Init SQL mounted from [init/](init/) creates the `analytics` database and retail event sink tables for `orders`, `payments`, and `inventory_changes`.
+- Init SQL mounted from [init/](init/) creates the `analytics` database, retail event sink tables for `orders`, `payments`, and `inventory_changes`, plus Kafka Engine source tables and materialized views for the matching retail event topics.
+- Validate the ingestion contract with [../../sql/validation/clickhouse_ingestion_contract.md](../../sql/validation/clickhouse_ingestion_contract.md).
 - Data persisted in `clickhouse-data` volume.
