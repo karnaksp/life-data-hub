@@ -134,6 +134,14 @@ Follow [docs/learning-path.md](docs/learning-path.md) for a concise, runnable se
 ## 🛠️ Development
 
 See [docs/development.md](docs/development.md) for project layout, env vars, and contribution tips.
+
+Portfolio quality checks:
+
+```bash
+python scripts/validate_project.py
+docker compose --env-file .env.example config --quiet
+```
+
 ---
 
 ## 🤝 Contributing
