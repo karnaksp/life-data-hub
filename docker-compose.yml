@@ -151,7 +151,7 @@ services:
     volumes:
       - kafka-data:/var/lib/kafka/data
     healthcheck:
-      test: ["CMD", "bash", "-c", "echo > /dev/tcp/localhost/9092"]
+      test: ["CMD", "nc", "-z", "localhost", "9092"]
       interval: 30s
       timeout: 10s
       retries: 5
