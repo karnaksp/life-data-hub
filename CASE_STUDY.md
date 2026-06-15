@@ -1,14 +1,14 @@
-# Data Forge: applied retail CDC/lakehouse lab
+# Data Forge: retail CDC/lakehouse ingestion reference
 
 ## Статус
 
-Этот репозиторий — fork для проверки applied retail CDC/lakehouse workflows. Базовый стек взят из upstream-проекта; в этом fork он превращается в воспроизводимый инженерный сценарий с явным описанием добавленного слоя, validation queries и run evidence.
+Этот репозиторий — fork для проверки retail CDC/lakehouse workflows. Базовый стек взят из upstream-проекта; здесь он оформлен как воспроизводимый инженерный сценарий с явным описанием добавленного слоя, validation queries и run evidence.
 
 ## Целевой сценарий
 
 **Retail CDC to lakehouse and analytics.**
 
-Applied case моделирует небольшую retail-систему: операционные изменения захватываются из Postgres, проходят через Kafka/Debezium, приземляются в lakehouse-хранилище и доступны для аналитических запросов.
+Сценарий моделирует небольшую retail-систему: операционные изменения захватываются из Postgres, проходят через Kafka/Debezium, приземляются в lakehouse-хранилище и доступны для аналитических запросов.
 
 ```mermaid
 flowchart LR
@@ -35,7 +35,7 @@ flowchart LR
 
 ## Validation Contract / Контракт валидации
 
-В case study сейчас несколько слоёв проверки:
+В проекте сейчас несколько слоёв проверки:
 
 | Layer | Evidence | File |
 | --- | --- | --- |
@@ -48,14 +48,14 @@ flowchart LR
 
 ## Acceptance criteria
 
-- Reviewer может запустить один локальный сценарий через Docker Compose по [docs/retail-cdc-runbook.md](docs/retail-cdc-runbook.md).
-- Case study объясняет, что изменено в этом fork относительно upstream.
+- Reviewer может запустить один локальный retail CDC сценарий через Docker Compose по [docs/retail-cdc-runbook.md](docs/retail-cdc-runbook.md).
+- Документация объясняет, что изменено в этом fork относительно upstream.
 - В репозитории есть validation SQL/checklists для ingestion, аналитических запросов и data quality checks.
-- Проект называется learning lab до тех пор, пока live run evidence не будет зафиксирован в репозитории.
+- Проект остается local retail CDC platform, пока live run evidence не будет зафиксирован для всех основных sinks.
 
 ## Ближайший backlog
 
 1. Запустить полный стек и сохранить screenshots/logs в `docs/assets/`.
 2. Добавить Kafka-to-lakehouse ingestion jobs для raw bronze events.
 3. Добавить лёгкий smoke profile для Kafka, Schema Registry, ClickHouse и generator.
-4. Перевести репозиторий из `lab` в `applied case study` только после коммита live run evidence.
+4. Расширить runtime evidence после коммита live run logs для lakehouse ingestion jobs.

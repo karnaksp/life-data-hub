@@ -1,34 +1,34 @@
-# ClickHouse Ingestion Contract
+# Контракт загрузки в ClickHouse
 
-This checklist validates the Kafka-to-ClickHouse wiring for the retail CDC case study. The static contract is covered by `python scripts/validate_project.py`; the commands below are for a short local runtime proof when Docker is available.
+Этот чеклист проверяет связку Kafka -> ClickHouse для retail CDC контура. Статический контракт покрывается командой `python scripts/validate_project.py`; команды ниже нужны для короткой runtime-проверки, когда доступен Docker.
 
-## Static Contract
+## Статический контракт
 
-The ClickHouse init SQL defines:
+ClickHouse init SQL определяет:
 
-- Kafka Engine source tables for `orders.v1`, `payments.v1`, and `inventory-changes.v1`.
-- Materialized views into `analytics.orders`, `analytics.payments`, and `analytics.inventory_changes`.
-- Dedicated consumer groups: `clickhouse_orders_sink_v1`, `clickhouse_payments_sink_v1`, and `clickhouse_inventory_changes_sink_v1`.
-- Avro Confluent decoding through the local Schema Registry at `http://schema-registry:8081`.
+- Kafka Engine source tables для `orders.v1`, `payments.v1` и `inventory-changes.v1`.
+- Materialized views в `analytics.orders`, `analytics.payments` и `analytics.inventory_changes`.
+- Отдельные consumer groups: `clickhouse_orders_sink_v1`, `clickhouse_payments_sink_v1` и `clickhouse_inventory_changes_sink_v1`.
+- Avro Confluent decoding через локальный Schema Registry по адресу `http://schema-registry:8081`.
 
-Run:
+Запуск:
 
 ```bash
 python scripts/validate_runtime_contract.py
 python scripts/validate_project.py
 ```
 
-## Runtime Smoke
+## Runtime smoke
 
-Use the capture script to start only the services needed for ClickHouse ingestion review, wait briefly for generator events, and write diffable evidence files under `docs/assets/`:
+Используйте capture script, чтобы поднять только сервисы, нужные для проверки ClickHouse ingestion, немного подождать события генератора и записать diffable evidence files в `docs/assets/`:
 
 ```bash
 python scripts/capture_clickhouse_evidence.py --duration 60 --cleanup
 ```
 
-The script applies `docker-compose.evidence.yml` on top of the default compose file. The override removes host port bindings so the smoke run can execute on developer machines where Postgres, Kafka, Schema Registry, or ClickHouse ports are already occupied.
+Скрипт применяет `docker-compose.evidence.yml` поверх основного compose-файла. Override убирает host port bindings, поэтому smoke run может выполняться на машинах разработчиков, где порты Postgres, Kafka, Schema Registry или ClickHouse уже заняты.
 
-The script writes:
+Скрипт записывает:
 
 - `docs/assets/clickhouse-show-tables.txt`
 - `docs/assets/clickhouse-orders-count.txt`
@@ -36,20 +36,20 @@ The script writes:
 - `docs/assets/clickhouse-inventory-count.txt`
 - `docs/assets/clickhouse-ingestion-log.txt`
 
-Manual equivalent:
+Ручной эквивалент:
 
 ```bash
 docker compose --env-file .env.example -f docker-compose.yml -f docker-compose.evidence.yml --profile core up -d postgres kafka schema-registry clickhouse
 docker compose --env-file .env.example -f docker-compose.yml -f docker-compose.evidence.yml --profile datagen up -d data-generator
 ```
 
-Inspect the ClickHouse tables:
+Проверить таблицы ClickHouse:
 
 ```bash
 docker compose --env-file .env.example -f docker-compose.yml -f docker-compose.evidence.yml exec clickhouse clickhouse-client --query "SHOW TABLES FROM analytics"
 ```
 
-Check that rows arrive after the generator has produced events:
+Проверить, что строки появляются после генерации событий:
 
 ```bash
 docker compose --env-file .env.example -f docker-compose.yml -f docker-compose.evidence.yml exec clickhouse clickhouse-client --query "SELECT count() FROM analytics.orders"
@@ -57,21 +57,21 @@ docker compose --env-file .env.example -f docker-compose.yml -f docker-compose.e
 docker compose --env-file .env.example -f docker-compose.yml -f docker-compose.evidence.yml exec clickhouse clickhouse-client --query "SELECT count() FROM analytics.inventory_changes"
 ```
 
-Run the example analytical queries:
+Запустить пример аналитического запроса:
 
 ```bash
 docker compose --env-file .env.example -f docker-compose.yml -f docker-compose.evidence.yml exec -T clickhouse clickhouse-client --multiquery < sql/examples/clickhouse_realtime_sales.sql
 ```
 
-Capture the generator log evidence:
+Сохранить лог генератора как evidence:
 
 ```bash
 docker compose --env-file .env.example -f docker-compose.yml -f docker-compose.evidence.yml logs --no-color --tail 200 data-generator > docs/assets/clickhouse-ingestion-log.txt
 ```
 
-## Evidence to Capture
+## Evidence для сохранения
 
-Prefer text logs for PR review because they are diffable and easy to search:
+Для ревью предпочтительны текстовые логи: они diffable и по ним удобно искать:
 
 - `docs/assets/clickhouse-show-tables.txt`
 - `docs/assets/clickhouse-orders-count.txt`
@@ -79,4 +79,4 @@ Prefer text logs for PR review because they are diffable and easy to search:
 - `docs/assets/clickhouse-inventory-count.txt`
 - `docs/assets/clickhouse-ingestion-log.txt`
 
-Static validation proves the wiring is present and aligned with repository contracts. Runtime proof requires a short local run that shows row-count files after events are produced.
+Статическая проверка доказывает, что wiring присутствует и совпадает с контрактами репозитория. Runtime-доказательство требует короткого локального запуска, где row-count files появляются после генерации событий.
