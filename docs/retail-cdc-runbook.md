@@ -1,17 +1,17 @@
-# Retail CDC Lakehouse Runbook
+# Runbook retail CDC lakehouse
 
-This runbook turns the fork into a concrete Data Engineering case study: a local retail platform emits operational changes from Postgres and business events into Kafka, then exposes validation and analytical checks through SQL clients.
+Runbook описывает локальный retail CDC контур: Postgres публикует операционные изменения, генератор пишет бизнес-события в Kafka, а SQL-клиенты проверяют аналитический слой и ClickHouse ingestion.
 
-## Business Scenario
+## Бизнес-сценарий
 
-A retail marketplace needs near-real-time visibility into orders, payments, shipments, inventory movement, and reference-data changes. The local stack models the operational system and the analytical platform:
+Retail marketplace нужна near-real-time видимость заказов, платежей, отгрузок, движения запасов и изменений справочников. Локальный stack моделирует operational system и analytical platform:
 
-- Postgres stores reference and inventory tables.
-- Debezium captures Postgres changes into Kafka CDC topics.
-- The data generator emits order, payment, shipment, inventory, and customer-interaction events.
-- Kafka UI, Trino, ClickHouse, Superset, and JupyterLab provide operational and analytical evidence.
+- Postgres хранит reference и inventory tables.
+- Debezium захватывает изменения Postgres в Kafka CDC topics.
+- Data generator публикует order, payment, shipment, inventory и customer-interaction events.
+- Kafka UI, Trino, ClickHouse, Superset и JupyterLab дают operational и analytical evidence.
 
-## Architecture
+## Архитектура
 
 ```mermaid
 flowchart LR
@@ -45,15 +45,15 @@ flowchart LR
     CH --> NB
 ```
 
-## Local Run
+## Локальный запуск
 
-### 1. Configure
+### 1. Настроить окружение
 
 ```bash
 cp .env.example .env
 ```
 
-For a laptop-friendly run, lower the event rate in `.env` or pass it inline:
+Для laptop-friendly запуска снизьте event rate в `.env` или передайте значения inline:
 
 ```bash
 TARGET_EPS=25
@@ -62,31 +62,31 @@ P_LATE_EVENT=0.05
 CANON_INVENTORY=postgres
 ```
 
-### 2. Start Core Services
+### 2. Запустить core services
 
 ```bash
 docker compose --profile core up -d
 docker compose ps
 ```
 
-Expected key services:
+Ожидаемые ключевые services:
 
-| Service | Purpose | URL |
+| Service | Назначение | URL |
 | --- | --- | --- |
-| Kafka UI | topic and consumer inspection | http://localhost:8082 |
+| Kafka UI | проверка topics и consumers | http://localhost:8082 |
 | Trino | federated SQL | http://localhost:8080 |
 | MinIO | S3-compatible storage | http://localhost:9001 |
 | Postgres | source database | `localhost:5432` |
 | Debezium | CDC connector API | http://localhost:8083 |
 
-### 3. Start the Retail Generator
+### 3. Запустить retail generator
 
 ```bash
 docker compose --profile datagen up -d data-generator
 docker compose logs -f data-generator
 ```
 
-Healthy output should include messages similar to:
+В healthy output должны быть похожие сообщения:
 
 ```text
 [fakegen] waiting for Postgres...
@@ -95,31 +95,31 @@ Seeded: 500 users, 200 products, 5 warehouses, 20 suppliers
 [fakegen] target EPS=...
 ```
 
-### 4. Inspect Kafka Topics
+### 4. Проверить Kafka topics
 
-Open Kafka UI at http://localhost:8082 and check these topics:
+Откройте Kafka UI на http://localhost:8082 и проверьте topics:
 
-| Topic | Meaning |
+| Topic | Смысл |
 | --- | --- |
 | `orders.v1` | order events |
 | `payments.v1` | payment events |
 | `shipments.v1` | shipment events |
 | `inventory-changes.v1` | inventory movement events |
 | `customer-interactions.v1` | customer behavior events |
-| `demo.public.users` | Debezium CDC for `users` |
-| `demo.public.products` | Debezium CDC for `products` |
-| `demo.public.inventory` | Debezium CDC for `inventory` |
-| `demo.public.warehouse_inventory` | Debezium CDC for `warehouse_inventory` |
+| `demo.public.users` | Debezium CDC для `users` |
+| `demo.public.products` | Debezium CDC для `products` |
+| `demo.public.inventory` | Debezium CDC для `inventory` |
+| `demo.public.warehouse_inventory` | Debezium CDC для `warehouse_inventory` |
 
-### 5. Run Validation Checks
+### 5. Запустить validation checks
 
-Run Postgres checks:
+Запустить Postgres checks:
 
 ```bash
 docker compose exec -T postgres psql -U admin -d demo < sql/validation/postgres_retail_seed_checks.sql
 ```
 
-Run Kafka topic checks from a Kafka container shell:
+Запустить Kafka topic checks из shell Kafka container:
 
 ```bash
 docker compose exec kafka bash
@@ -127,66 +127,66 @@ kafka-topics.sh --bootstrap-server kafka:9092 --list
 kafka-topics.sh --bootstrap-server kafka:9092 --describe --topic orders.v1
 ```
 
-Use `sql/validation/kafka_topic_inventory.md` as the checklist.
+Используйте `sql/validation/kafka_topic_inventory.md` как checklist.
 
-### 6. Run Analytical Examples
+### 6. Запустить аналитические examples
 
-Use the SQL examples after the corresponding sinks or query engines are wired:
+Используйте SQL examples после подключения соответствующих sinks или query engines:
 
-| File | Engine | Purpose |
+| File | Engine | Назначение |
 | --- | --- | --- |
-| `sql/examples/postgres_retail_profile.sql` | Postgres | Source-system profile and retail dimensions |
+| `sql/examples/postgres_retail_profile.sql` | Postgres | Source-system profile и retail dimensions |
 | `sql/examples/clickhouse_realtime_sales.sql` | ClickHouse | Realtime event analytics pattern |
 | `sql/examples/trino_lakehouse_quality.sql` | Trino | Lakehouse bronze quality pattern |
 
-The ClickHouse example is wired through Kafka Engine source tables and materialized views in `infra/clickhouse/init/002_kafka_event_ingestion.sql`. Use `sql/validation/clickhouse_ingestion_contract.md` for the short runtime smoke commands. The Trino example remains a target-state lakehouse query until the raw Bronze ingestion evidence is finalized.
+ClickHouse example подключен через Kafka Engine source tables и materialized views в `infra/clickhouse/init/002_kafka_event_ingestion.sql`. Для короткого runtime smoke используйте команды из `sql/validation/clickhouse_ingestion_contract.md`. Trino example остается target-state lakehouse query, пока raw Bronze ingestion evidence не будет финализирован.
 
-For a diffable ClickHouse live evidence capture, run:
+Для diffable ClickHouse live evidence capture выполните:
 
 ```bash
 python scripts/capture_clickhouse_evidence.py --duration 60 --cleanup
 ```
 
-### 7. Review Static Evidence
+### 7. Проверить static evidence
 
-Generate and inspect the Docker-free evidence bundle:
+Сгенерируйте и проверьте Docker-free evidence bundle:
 
 ```bash
 python scripts/generate_evidence_bundle.py
 python scripts/validate_project.py
 ```
 
-Open `docs/evidence/retail-cdc-evidence.md` to review the current topic, table, materialized-view, and validation-command contract.
+Откройте `docs/evidence/retail-cdc-evidence.md`, чтобы проверить текущие topic, table, materialized-view и validation-command contracts.
 
-## Evidence to Capture
+## Evidence для сохранения
 
-When the stack runs successfully, capture these screenshots or logs under `docs/assets/`:
+Когда stack успешно запускается, сохраняйте эти screenshots или logs в `docs/assets/`:
 
 | Evidence | File name |
 | --- | --- |
-| Kafka UI topic list with retail topics | `kafka-topics.png` |
-| Data generator logs showing seed + target EPS | `generator-logs.png` |
+| Kafka UI topic list с retail topics | `kafka-topics.png` |
+| Data generator logs с seed + target EPS | `generator-logs.png` |
 | Postgres validation query output | `postgres-validation.png` |
-| Trino or ClickHouse analytical query output | `analytics-query.png` |
+| Trino или ClickHouse analytical query output | `analytics-query.png` |
 | ClickHouse table list | `clickhouse-show-tables.txt` |
 | ClickHouse event counts | `clickhouse-orders-count.txt`, `clickhouse-payments-count.txt`, `clickhouse-inventory-count.txt` |
 
-## Stop and Clean Up
+## Остановить и очистить
 
 ```bash
 docker compose --profile datagen down
 docker compose --profile core down
 ```
 
-To remove local data volumes:
+Чтобы удалить local data volumes:
 
 ```bash
 docker compose --profile core --profile datagen down -v
 ```
 
-## Known Limitations
+## Известные ограничения
 
-- This runbook documents the applied case and validation contract. It does not yet prove that every sink has live run evidence.
-- The ClickHouse ingestion contract is statically validated; runtime proof still requires local row-count logs after generator events are produced.
-- The Trino example query may need table-name adjustment after the lakehouse ingestion jobs are finalized.
-- The project remains a fork/lab until the next pass adds original ingestion jobs and captured run evidence.
+- Runbook описывает прикладной runtime-контур и validation contract. Он пока не доказывает, что у каждого sink есть live run evidence.
+- ClickHouse ingestion contract проверяется статически; runtime proof все еще требует локальных row-count logs после генерации событий.
+- Trino example query может потребовать корректировки table names после финализации lakehouse ingestion jobs.
+- Проект остается local retail CDC platform, пока следующий проход не добавит original ingestion jobs и captured run evidence для всех основных sinks.

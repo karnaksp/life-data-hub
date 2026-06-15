@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate a static evidence bundle for the retail CDC case study."""
+"""Generate a static evidence bundle for the retail CDC ingestion reference."""
 
 from __future__ import annotations
 

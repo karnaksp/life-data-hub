@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Static runtime-contract checks for the retail CDC case study.
+"""Static runtime-contract checks for the retail CDC ingestion reference.
 
 These checks intentionally avoid importing Airflow, Spark, Docker Compose, or
 the generator package. They guard the local CDC/lakehouse contract against drift
