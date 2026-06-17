@@ -15,6 +15,7 @@ from typing import Iterable
 
 from lifehub.activity_files import ActivityFileSummary, summary_payload
 from lifehub.context import DailyContextProfile
+from lifehub.observability import record_event
 from lifehub.recommendations import RecommendationEvent
 from lifehub.signals import ContextSignal
 from lifehub.weather import WeatherHour
@@ -215,6 +216,19 @@ def write_landing_events(events: Iterable[dict], output_root: Path, dt: str | No
         with path.open("a", encoding="utf-8") as handle:
             handle.write(json.dumps(event, sort_keys=True, separators=(",", ":")) + "\n")
         written[str(path)] = written.get(str(path), 0) + 1
+    record_event(
+        component="lifehub.lake",
+        action="write_landing_events",
+        metrics={
+            "events": len(event_list),
+            "files": len(written),
+        },
+        fields={
+            "output_root": output_root,
+            "dt": date_part,
+            "sources": sorted({event.get("source_name", "") for event in event_list}),
+        },
+    )
     return written
 
 
@@ -227,4 +241,10 @@ def write_landing_manifest(written: dict[str, int], output_root: Path) -> Path:
     path = output_root / "lifehub" / "_manifests" / "latest_landing_manifest.json"
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    record_event(
+        component="lifehub.lake",
+        action="write_landing_manifest",
+        metrics={"files": len(written)},
+        fields={"path": path},
+    )
     return path

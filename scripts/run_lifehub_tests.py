@@ -19,6 +19,7 @@ from lifehub.diary import capture_to_activity_log, command_name, parse_capture_c
 from lifehub.feedback import feedback_keyboard, parse_feedback_callback, parse_feedback_command
 from lifehub.generic_sources import custom_source_events, load_json_rows
 from lifehub.local_files import detect_local_kind, import_local_file, scan_inbox
+from lifehub.observability import read_events, record_event, render_log_summary, sanitize, summarize_events
 from lifehub.places import load_spot_fixture, place_spot_events
 from lifehub.recommendations import (
     build_recommendations,
@@ -352,6 +353,7 @@ class LakeExportTests(unittest.TestCase):
             self.assertEqual(len(paths), 1)
             self.assertIn("lifehub/landing/daily_context_profile/dt=2026-06-16/events.jsonl", paths[0])
             self.assertTrue(Path(paths[0]).exists())
+            self.assertEqual(read_events(Path(tmpdir) / "missing.jsonl"), [])
 
     def test_gpx_activity_file_becomes_lake_event(self) -> None:
         summary = parse_gpx(FIXTURES / "activity_route_spb_public.gpx", activity_type="skate")
@@ -431,6 +433,58 @@ class LakeExportTests(unittest.TestCase):
         self.assertEqual(events[0]["source_name"], "sleep_quality")
         self.assertEqual(events[0]["event_type"], "sleep_quality_night")
         self.assertNotIn("note", str(events).lower())
+
+
+class ObservabilityTests(unittest.TestCase):
+    def test_record_event_redacts_sensitive_fields(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = Path(tmpdir) / "lifehub.jsonl"
+            record_event(
+                component="lifehub.test",
+                action="send",
+                status="failure",
+                message="demo",
+                fields={
+                    "telegram_token": "123:secret",
+                    "chat_id": "42",
+                    "safe_source": "weather_forecast",
+                },
+                log_path=path,
+            )
+            rows = read_events(path)
+            self.assertEqual(len(rows), 1)
+            self.assertEqual(rows[0]["fields"]["telegram_token"], "[redacted]")
+            self.assertEqual(rows[0]["fields"]["chat_id"], "[redacted]")
+            self.assertEqual(rows[0]["fields"]["safe_source"], "weather_forecast")
+
+    def test_log_summary_groups_status_and_component(self) -> None:
+        rows = [
+            {
+                "event_time": "2026-06-17T08:00:00+00:00",
+                "component": "lifehub.cli",
+                "action": "score",
+                "status": "success",
+            },
+            {
+                "event_time": "2026-06-17T08:01:00+00:00",
+                "component": "lifehub.telegram",
+                "action": "send_message",
+                "status": "failure",
+                "message": "network down",
+            },
+        ]
+        summary = summarize_events(rows)
+        self.assertEqual(summary["events"], 2)
+        self.assertEqual(summary["by_status"]["failure"], 1)
+        text = render_log_summary(rows)
+        self.assertIn("LifeHub runtime logs", text)
+        self.assertIn("lifehub.telegram", text)
+        self.assertIn("network down", text)
+
+    def test_sanitize_handles_nested_sensitive_fields(self) -> None:
+        result = sanitize({"nested": {"api_key": "secret", "count": 2}})
+        self.assertEqual(result["nested"]["api_key"], "[redacted]")
+        self.assertEqual(result["nested"]["count"], 2)
 
 
 class LocalSummaryImportTests(unittest.TestCase):
@@ -880,6 +934,8 @@ class EvidenceFlowTests(unittest.TestCase):
         text = (ROOT / "infra/lifehub/lifehub/cli.py").read_text(encoding="utf-8")
         self.assertIn('sub.add_parser("log")', text)
         self.assertIn("cmd_log", text)
+        self.assertIn('sub.add_parser("logs")', text)
+        self.assertIn("cmd_logs", text)
 
     def test_cli_context_profile_command_is_registered(self) -> None:
         text = (ROOT / "infra/lifehub/lifehub/cli.py").read_text(encoding="utf-8")

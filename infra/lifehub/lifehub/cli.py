@@ -38,6 +38,7 @@ from lifehub.lake import (
     write_landing_manifest,
 )
 from lifehub.local_files import LOCAL_KINDS, import_local_file, scan_inbox
+from lifehub.observability import configure_logging, read_events, record_event, render_log_summary
 from lifehub.places import fetch_overpass_spots, load_spot_fixture, place_spot_events
 from lifehub.recommendations import (
     build_recommendations,
@@ -434,6 +435,15 @@ def cmd_data_gaps(args: argparse.Namespace) -> int:
         sleep_fixture=args.sleep_fixture,
     )
     print(render_data_gaps(profile))
+    return 0
+
+
+def cmd_logs(args: argparse.Namespace) -> int:
+    events = read_events(args.path, limit=args.limit, component=args.component, status=args.status)
+    if args.json:
+        print(json.dumps(events, indent=2, sort_keys=True))
+    else:
+        print(render_log_summary(events))
     return 0
 
 
@@ -1253,6 +1263,14 @@ def build_parser() -> argparse.ArgumentParser:
     data_gaps.add_argument("--sleep-fixture", type=Path)
     data_gaps.set_defaults(func=cmd_data_gaps)
 
+    logs = sub.add_parser("logs")
+    logs.add_argument("--path", type=Path)
+    logs.add_argument("--limit", type=int, default=100)
+    logs.add_argument("--component", default="")
+    logs.add_argument("--status", default="")
+    logs.add_argument("--json", action="store_true")
+    logs.set_defaults(func=cmd_logs)
+
     places = sub.add_parser("place-sync")
     places.add_argument("--source", choices=["auto", "overpass", "config"], default="auto")
     places.add_argument("--radius-m", type=int, default=12000)
@@ -1313,8 +1331,32 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main() -> int:
+    configure_logging()
     args = build_parser().parse_args()
-    return args.func(args)
+    record_event(
+        component="lifehub.cli",
+        action=args.command,
+        status="started",
+        fields={"command": args.command},
+    )
+    try:
+        exit_code = int(args.func(args) or 0)
+    except Exception as exc:
+        record_event(
+            component="lifehub.cli",
+            action=args.command,
+            status="failure",
+            message=str(exc),
+            fields={"error_type": type(exc).__name__},
+        )
+        raise
+    record_event(
+        component="lifehub.cli",
+        action=args.command,
+        status="success" if exit_code == 0 else "failure",
+        metrics={"exit_code": exit_code},
+    )
+    return exit_code
 
 
 if __name__ == "__main__":

@@ -79,6 +79,8 @@ payload: privacy-safe source payload
 
 Existing runtime code writes the full `lifehub.lake.v1` envelope. New connectors should keep payloads privacy-safe and put evidence-friendly facts into `payload_summary`, `metrics`, `tags`, and `quality_flags` instead of copying raw private text.
 
+Runtime observability has a separate local JSONL log at `data/private/logs/lifehub/events.jsonl`. It is useful for debugging command runs and can later be summarized into `data_source_runs`; the raw local log itself should not be committed.
+
 ## Onboarding Rules
 
 1. Add the source to `config/lifehub/source_registry.yaml` with tier, privacy class, raw policy, local policy, landing path, tables, consumers, commit policy, and onboarding contract.
