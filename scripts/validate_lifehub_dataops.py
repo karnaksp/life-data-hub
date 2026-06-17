@@ -39,6 +39,10 @@ REQUIRED_FILES = [
     "infra/lifehub/lifehub/sleep.py",
     "infra/lifehub/lifehub/generic_sources.py",
     "infra/lifehub/lifehub/source_onboarding.py",
+    "infra/lifehub/lifehub/source_subscriptions.py",
+    "config/lifehub/source_subscriptions.example.json",
+    "fixtures/lifehub/source_subscriptions.json",
+    "fixtures/lifehub/rss_feed.xml",
     "fixtures/lifehub/sleep_quality.json",
     "sql/lifehub/trino_lifehub_lakehouse.sql",
 ]
@@ -71,6 +75,7 @@ ACTIVE_FIXTURE_SOURCES = {
     "activity_files": ["fixtures/lifehub/activity_route_spb_public.gpx"],
     "decision_feedback": ["fixtures/lifehub/decision_metrics.json", "fixtures/lifehub/feedback_profile.json"],
     "context_signals": ["fixtures/lifehub/context_signals.json"],
+    "external_source_items": ["fixtures/lifehub/source_subscriptions.json", "fixtures/lifehub/rss_feed.xml"],
     "daily_context_profile": [
         "fixtures/lifehub/open_meteo_clear_day.json",
         "fixtures/lifehub/week_summary.json",
@@ -543,6 +548,15 @@ def validate_lakehouse_artifacts() -> list[str]:
     for phrase in ['sub.add_parser("source-onboard")', "cmd_source_onboard", "--apply-registry"]:
         if phrase not in cli:
             failures.append(f"LifeHub CLI missing source onboarding phrase: {phrase}")
+    for phrase in [
+        'sub.add_parser("source-add")',
+        'sub.add_parser("source-list")',
+        'sub.add_parser("source-sync")',
+        "handle_source_subscription_command",
+        "external_source_items",
+    ]:
+        if phrase not in cli:
+            failures.append(f"LifeHub CLI missing source subscription phrase: {phrase}")
     for phrase in ["recovery_summary", "sleep recovery is low", "sleep duration was short"]:
         if phrase not in recommendations:
             failures.append(f"LifeHub recommendation engine missing recovery phrase: {phrase}")

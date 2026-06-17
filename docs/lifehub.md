@@ -308,6 +308,37 @@ The package contains:
 
 After review, apply the registry entry with `--apply-registry` or copy it manually, import the generated fixture through `custom-source-import`, and run `make lifehub-lakehouse-runtime-smoke`. This keeps source onboarding repeatable for sleep metrics, moto-school schedules, broker exports, calendar events, or any future life domain.
 
+### Managed URL subscriptions
+
+For concrete links that change often, do not edit `source_registry.yaml` every time. Add them to the local subscription list instead:
+
+```text
+/source_add https://t.me/s/some_public_channel label=MotoNews domain=moto tags=moto,spb
+/source_add rss_feed https://example.com/feed.xml label=MarketFeed domain=trading tags=market,watchlist
+/source_list
+/source_pause rss_abc123
+/source_resume rss_abc123
+/source_sync
+```
+
+The CLI equivalent is:
+
+```bash
+PYTHONPATH=infra/lifehub python -m lifehub.cli source-add \
+  https://example.com/feed.xml \
+  --label DemoFeed \
+  --domain news \
+  --tags news,demo
+
+PYTHONPATH=infra/lifehub python -m lifehub.cli source-sync \
+  --subscriptions fixtures/lifehub/source_subscriptions.json \
+  --fixture fixtures/lifehub/rss_feed.xml \
+  --output-root tmp/lake \
+  --dt 2026-06-16
+```
+
+Managed subscriptions are stored in `data/private/lifehub/source_subscriptions.json` by default. They land as `external_source_items` events with URL hashes, host-level provenance, domain/tags, and short public previews. See `docs/source-subscriptions.md` and `make lifehub-source-subscription-demo`.
+
 ## Data engineering controls
 
 - Contract: `contracts/lifehub/data_contract.yaml`.

@@ -1,0 +1,19 @@
+{
+  "subscriptions": [
+    {
+      "cadence": "manual",
+      "created_at": "2026-06-16T08:00:00+00:00",
+      "domain": "news",
+      "enabled": true,
+      "label": "Synthetic RSS demo",
+      "privacy_class": "public_context",
+      "reference": "https://example.com/lifehub-demo/feed.xml",
+      "source_type": "rss_feed",
+      "subscription_id": "rss_demo000000",
+      "tags": ["news", "demo"],
+      "updated_at": "2026-06-16T08:00:00+00:00"
+    }
+  ],
+  "updated_at": "2026-06-16T08:00:00+00:00",
+  "version": 1
+}

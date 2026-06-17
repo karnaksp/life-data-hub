@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<rss version="2.0">
+  <channel>
+    <title>LifeHub synthetic feed</title>
+    <link>https://example.com/lifehub-demo</link>
+    <description>Synthetic public RSS fixture for managed source tests.</description>
+    <item>
+      <title>Dry evening window for skate practice</title>
+      <link>https://example.com/lifehub-demo/skate-window</link>
+      <pubDate>Tue, 16 Jun 2026 16:00:00 GMT</pubDate>
+      <description>Fixture item about a public outdoor readiness context signal.</description>
+    </item>
+    <item>
+      <title>Moto theory review checklist</title>
+      <link>https://example.com/lifehub-demo/moto-review</link>
+      <pubDate>Tue, 16 Jun 2026 18:00:00 GMT</pubDate>
+      <description>Fixture item about a public learning context signal.</description>
+    </item>
+  </channel>
+</rss>
