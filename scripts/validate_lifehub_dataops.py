@@ -40,6 +40,7 @@ REQUIRED_FILES = [
     "infra/lifehub/lifehub/generic_sources.py",
     "infra/lifehub/lifehub/source_onboarding.py",
     "infra/lifehub/lifehub/source_subscriptions.py",
+    "infra/lifehub/lifehub/runtime_sources.py",
     "config/lifehub/source_subscriptions.example.json",
     "fixtures/lifehub/source_subscriptions.json",
     "fixtures/lifehub/rss_feed.xml",
@@ -572,9 +573,14 @@ def validate_lakehouse_artifacts() -> list[str]:
         'sub.add_parser("source-sync")',
         "handle_source_subscription_command",
         "external_source_items",
+        "runtime-log-import",
     ]:
         if phrase not in cli:
             failures.append(f"LifeHub CLI missing source subscription phrase: {phrase}")
+    runtime_sources = (ROOT / "infra/lifehub/lifehub/runtime_sources.py").read_text(encoding="utf-8")
+    for phrase in ["runtime_log_source_events", "data_source_runs", "render_source_run_status", "sanitize_message"]:
+        if phrase not in runtime_sources:
+            failures.append(f"LifeHub runtime source importer missing phrase: {phrase}")
     for phrase in ["recovery_summary", "sleep recovery is low", "sleep duration was short"]:
         if phrase not in recommendations:
             failures.append(f"LifeHub recommendation engine missing recovery phrase: {phrase}")

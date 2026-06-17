@@ -417,6 +417,7 @@ def validate_cockpit() -> list[str]:
         "Weekly Goal Progress",
         "Activity Learning Profile",
         "Context Signals",
+        "DataOps Health",
         "Weather Aggregates",
     ]
     forbidden = [

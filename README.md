@@ -131,6 +131,13 @@ make lifehub-demo
 PYTHONPATH=infra/lifehub python -m lifehub.cli logs --limit 50
 ```
 
+Превратить runtime-логи в анализируемый DataOps source:
+
+```bash
+PYTHONPATH=infra/lifehub python -m lifehub.cli runtime-log-import --output-root tmp/lake
+PYTHONPATH=infra/lifehub python -m lifehub.cli source-status --landing-root tmp/lake
+```
+
 Полный lakehouse smoke:
 
 ```bash

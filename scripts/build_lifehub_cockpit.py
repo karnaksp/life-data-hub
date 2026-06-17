@@ -7,6 +7,7 @@ import argparse
 import html
 import json
 import subprocess
+import sys
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -15,6 +16,9 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUTPUT = ROOT / "docs" / "lifehub-cockpit.html"
+sys.path.insert(0, str(ROOT / "infra" / "lifehub"))
+
+from lifehub.runtime_sources import load_source_run_status  # noqa: E402
 COMPOSE = [
     "docker",
     "compose",
@@ -40,6 +44,7 @@ class CockpitData:
     signal_daily: list[dict[str, Any]]
     weather_daily: list[dict[str, Any]]
     daily_context_latest: list[dict[str, Any]]
+    source_health: list[dict[str, Any]]
 
 
 def run(args: list[str], timeout: int = 120) -> subprocess.CompletedProcess[str]:
@@ -141,6 +146,7 @@ def load_live_data() -> CockpitData:
             LIMIT 7
             """
         ),
+        source_health=load_source_run_status(ROOT / "tmp" / "lake"),
     )
 
 
@@ -293,6 +299,38 @@ def load_demo_data() -> CockpitData:
                 "latest_generated_at": "2026-06-16 08:25:00",
             }
         ],
+        source_health=[
+            {
+                "source_name": "lifehub.cli",
+                "status": "ok",
+                "quality_state": "fresh",
+                "freshness_minutes": 0,
+                "row_count": 14,
+                "error_count": 0,
+                "latest_event_time": "2026-06-16T12:00:00+00:00",
+                "last_error": "",
+            },
+            {
+                "source_name": "lifehub.telegram",
+                "status": "failed",
+                "quality_state": "has_failures",
+                "freshness_minutes": 8,
+                "row_count": 3,
+                "error_count": 1,
+                "latest_event_time": "2026-06-16T11:52:00+00:00",
+                "last_error": "Telegram credentials missing; printed to stdout.",
+            },
+            {
+                "source_name": "lifehub.lake",
+                "status": "ok",
+                "quality_state": "fresh",
+                "freshness_minutes": 0,
+                "row_count": 8,
+                "error_count": 0,
+                "latest_event_time": "2026-06-16T12:00:00+00:00",
+                "last_error": "",
+            },
+        ],
     )
 
 
@@ -364,6 +402,7 @@ def kpis(data: CockpitData) -> list[tuple[str, str, str]]:
     context = latest_context(data)
     recommendations = sum(int(number(row.get("recommendations"))) for row in data.recommendation_daily)
     signal_count = sum(int(number(row.get("signals"))) for row in data.signal_daily)
+    failed_sources = sum(1 for row in data.source_health if int(number(row.get("error_count"))) > 0)
     covered_goals = sum(1 for row in data.goal_progress if number(row.get("progress")) >= 1)
     total_goals = len(data.goal_progress)
     return [
@@ -376,6 +415,7 @@ def kpis(data: CockpitData) -> list[tuple[str, str, str]]:
         ("Follow rate", f"{number(useful.get('follow_rate')):.0%}", "feedback based"),
         ("Recommendations", str(recommendations), "stored events"),
         ("Context signals", str(int(number(context.get("signal_count_7d")) or signal_count)), "market, GitHub, system"),
+        ("Source health", str(failed_sources), "sources with errors"),
         ("Weekly goals", f"{covered_goals}/{total_goals}", "targets covered"),
     ]
 
@@ -479,6 +519,24 @@ def weather_rows(data: CockpitData) -> str:
             """
         )
     return "\n".join(rows) or '<tr><td colspan="5">No weather aggregates yet.</td></tr>'
+
+
+def source_health_rows(data: CockpitData) -> str:
+    rows = []
+    for row in data.source_health[:12]:
+        status = str(row.get("status") or "unknown")
+        rows.append(
+            f"""
+            <tr>
+              <td><strong>{esc(row.get("source_name"))}</strong><span>{esc(row.get("latest_event_time"))}</span></td>
+              <td><span class="pill {esc(status)}">{esc(status)}</span></td>
+              <td class="num">{int(number(row.get("freshness_minutes")))}</td>
+              <td class="num">{int(number(row.get("row_count")))}</td>
+              <td class="num">{int(number(row.get("error_count")))}</td>
+            </tr>
+            """
+        )
+    return "\n".join(rows) or '<tr><td colspan="5">No runtime source health yet. Run runtime-log-import.</td></tr>'
 
 
 def weekly_review_card(data: CockpitData) -> str:
@@ -706,6 +764,13 @@ def render_html(data: CockpitData, source_mode: str) -> str:
           <table>
             <thead><tr><th>Date</th><th>Domain</th><th>Direction</th><th class="num">Urgency</th><th class="num">Conf.</th></tr></thead>
             <tbody>{signal_rows(data)}</tbody>
+          </table>
+        </section>
+        <section class="panel">
+          <h2>DataOps Health</h2>
+          <table>
+            <thead><tr><th>Source</th><th>Status</th><th class="num">Fresh</th><th class="num">Rows</th><th class="num">Errors</th></tr></thead>
+            <tbody>{source_health_rows(data)}</tbody>
           </table>
         </section>
         <section class="panel">

@@ -49,6 +49,7 @@ lifehub-full-source-demo: lifehub-lake-export-fixture
 	PYTHONPATH=infra/lifehub python -m lifehub.cli place-sync --fixture fixtures/lifehub/overpass_spots.json --output-root tmp/lake --dt 2026-06-16 --output-only
 	PYTHONPATH=infra/lifehub python -m lifehub.cli inbox-scan fixtures/lifehub/local_inbox --output-root tmp/lake --dt 2026-06-16
 	PYTHONPATH=infra/lifehub python -m lifehub.cli source-sync --subscriptions fixtures/lifehub/source_subscriptions.json --fixture fixtures/lifehub/rss_feed.xml --output-root tmp/lake --dt 2026-06-16
+	PYTHONPATH=infra/lifehub python -m lifehub.cli runtime-log-import --output-root tmp/lake --dt 2026-06-16 --observed-at 2026-06-16T12:00:00+00:00
 	python scripts/capture_lifehub_lake_evidence.py
 	python scripts/validate_lifehub_dataops.py --landing-root tmp/lake --write-source-map docs/evidence/lifehub-source-map-demo.md
 

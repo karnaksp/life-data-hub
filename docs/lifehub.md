@@ -445,6 +445,15 @@ Current structured events cover:
 
 The logger redacts fields with credential-like keys such as token, secret, password, chat id, API key and DSN. Runtime logs are local operational data, not public evidence. For committed proof use the existing redacted evidence commands.
 
+Convert local runtime logs into the normal `data_source_runs` source:
+
+```bash
+PYTHONPATH=infra/lifehub python -m lifehub.cli runtime-log-import --output-root tmp/lake
+PYTHONPATH=infra/lifehub python -m lifehub.cli source-status --landing-root tmp/lake
+```
+
+The importer writes aggregate health rows: component name, status, freshness minutes, row count, error count, latest event time and redacted last error. It does not copy raw Telegram messages, tokens, chat ids or private payloads into landing. The Telegram `/sources` command and local cockpit can use these `data_source_runs` events to explain whether the recommendation pipeline itself is healthy.
+
 ## LifeHub Cockpit
 
 LifeHub Cockpit is the first local visual product surface. It is a static HTML dashboard generated from ClickHouse marts and designed for quick daily review:
@@ -454,6 +463,7 @@ LifeHub Cockpit is the first local visual product surface. It is a static HTML d
 - weekly goal progress;
 - recommendation score trend;
 - context signals from market/GitHub/system domains;
+- DataOps health from runtime logs and `data_source_runs`;
 - weather aggregates for configured Saint Petersburg locations.
 
 Generate it from local runtime data:

@@ -29,6 +29,12 @@ from lifehub.recommendations import (
     render_progress_scorecard,
     weekly_activity_counts,
 )
+from lifehub.runtime_sources import (
+    load_source_run_status,
+    render_source_run_status,
+    runtime_log_source_events,
+    sanitize_message,
+)
 from lifehub.scoring import score_readiness
 from lifehub.signals import load_github_fixture, load_market_fixture, load_signal_fixture, normalize_signals
 from lifehub.sleep import load_sleep_fixture, normalize_sleep_rows, sleep_quality_events, summarize_sleep
@@ -486,6 +492,44 @@ class ObservabilityTests(unittest.TestCase):
         self.assertEqual(result["nested"]["api_key"], "[redacted]")
         self.assertEqual(result["nested"]["count"], 2)
 
+    def test_runtime_logs_become_data_source_run_events(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            log_path = Path(tmpdir) / "events.jsonl"
+            record_event(component="lifehub.cli", action="score", status="success", log_path=log_path)
+            record_event(
+                component="lifehub.telegram",
+                action="send_message",
+                status="failure",
+                message="token=secret-value network failed",
+                log_path=log_path,
+            )
+            events = runtime_log_source_events(
+                log_path,
+                observed_at="2026-06-17T09:00:00+00:00",
+            )
+            self.assertEqual({event["source_name"] for event in events}, {"data_source_runs"})
+            self.assertTrue(any(event["payload"]["source_name"] == "lifehub.telegram" for event in events))
+            serialized = json.dumps(events, sort_keys=True)
+            self.assertNotIn("secret-value", serialized)
+            self.assertIn("runtime_log_import", serialized)
+
+    def test_runtime_source_status_reads_landing_events(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            log_path = Path(tmpdir) / "events.jsonl"
+            record_event(component="lifehub.cli", action="score", status="success", log_path=log_path)
+            events = runtime_log_source_events(log_path, observed_at="2026-06-17T09:00:00+00:00")
+            write_landing_events(events, Path(tmpdir), "2026-06-17")
+            rows = load_source_run_status(Path(tmpdir))
+            self.assertTrue(any(row["source_name"] == "lifehub.cli" for row in rows))
+            text = render_source_run_status(rows)
+            self.assertIn("LifeHub source health", text)
+            self.assertIn("lifehub.cli", text)
+
+    def test_sanitize_message_masks_secret_like_text(self) -> None:
+        text = sanitize_message("Telegram failed token=abc123 bot123456:abcdefghijklmnopqrstuvwxyz")
+        self.assertNotIn("abc123", text)
+        self.assertNotIn("abcdefghijklmnopqrstuvwxyz", text)
+
 
 class LocalSummaryImportTests(unittest.TestCase):
     def test_summary_fixtures_auto_detect_and_land(self) -> None:
@@ -936,6 +980,8 @@ class EvidenceFlowTests(unittest.TestCase):
         self.assertIn("cmd_log", text)
         self.assertIn('sub.add_parser("logs")', text)
         self.assertIn("cmd_logs", text)
+        self.assertIn('sub.add_parser("runtime-log-import")', text)
+        self.assertIn("cmd_runtime_log_import", text)
 
     def test_cli_context_profile_command_is_registered(self) -> None:
         text = (ROOT / "infra/lifehub/lifehub/cli.py").read_text(encoding="utf-8")

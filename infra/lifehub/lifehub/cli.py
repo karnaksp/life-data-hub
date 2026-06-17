@@ -48,6 +48,7 @@ from lifehub.recommendations import (
     render_progress_scorecard,
     render_weekly_intelligence_report,
 )
+from lifehub.runtime_sources import load_source_run_status, render_source_run_status, runtime_log_source_events
 from lifehub.scoring import render_digest, score_readiness
 from lifehub.signals import (
     env_symbols,
@@ -414,12 +415,12 @@ def cmd_capture(args: argparse.Namespace) -> int:
 
 
 def cmd_sources(args: argparse.Namespace) -> int:
-    print(render_sources())
+    print(render_sources(getattr(args, "landing_root", Path("tmp/lake"))))
     return 0
 
 
 def cmd_source_status(args: argparse.Namespace) -> int:
-    print(render_sources())
+    print(render_sources(getattr(args, "landing_root", Path("tmp/lake"))))
     return 0
 
 
@@ -444,6 +445,17 @@ def cmd_logs(args: argparse.Namespace) -> int:
         print(json.dumps(events, indent=2, sort_keys=True))
     else:
         print(render_log_summary(events))
+    return 0
+
+
+def cmd_runtime_log_import(args: argparse.Namespace) -> int:
+    events = runtime_log_source_events(args.path, observed_at=args.observed_at or None, limit=args.limit)
+    written = write_landing_events(events, args.output_root, args.dt)
+    manifest = write_landing_manifest(written, args.output_root)
+    print(f"Imported {len(events)} runtime source health events from {args.path or 'default runtime log'}.")
+    for path, rows in sorted(written.items()):
+        print(f"- {path}: {rows}")
+    print(f"Manifest: {manifest}")
     return 0
 
 
@@ -795,7 +807,7 @@ def handle_telegram_text(text: str, cfg) -> None:
             "\n".join(f"- {line}" for line in lines) or "No recent LifeHub context signals.",
         )
     elif name == "/sources":
-        send_message(cfg.telegram_token, cfg.telegram_chat_id, render_sources())
+        send_message(cfg.telegram_token, cfg.telegram_chat_id, render_sources(Path("tmp/lake")))
     elif name == "/data_gaps":
         try:
             profile = build_context_profile(cfg, cfg.fixture_weather_path)
@@ -1043,7 +1055,11 @@ def render_metrics(
     return render_progress_scorecard(summary, decision_metrics, feedback_profile, preferences)
 
 
-def render_sources() -> str:
+def render_sources(landing_root: Path | None = None) -> str:
+    if landing_root is not None:
+        rows = load_source_run_status(landing_root)
+        if rows:
+            return render_source_run_status(rows)
     return "\n".join(
         [
             "LifeHub capture sources",
@@ -1211,8 +1227,13 @@ def build_parser() -> argparse.ArgumentParser:
     capture.add_argument("--write-clickhouse", action="store_true")
     capture.set_defaults(func=cmd_capture)
 
-    sub.add_parser("sources").set_defaults(func=cmd_sources)
-    sub.add_parser("source-status").set_defaults(func=cmd_source_status)
+    sources = sub.add_parser("sources")
+    sources.add_argument("--landing-root", type=Path, default=Path("tmp/lake"))
+    sources.set_defaults(func=cmd_sources)
+
+    source_status = sub.add_parser("source-status")
+    source_status.add_argument("--landing-root", type=Path, default=Path("tmp/lake"))
+    source_status.set_defaults(func=cmd_source_status)
 
     source_add = sub.add_parser("source-add")
     source_add.add_argument("reference")
@@ -1270,6 +1291,14 @@ def build_parser() -> argparse.ArgumentParser:
     logs.add_argument("--status", default="")
     logs.add_argument("--json", action="store_true")
     logs.set_defaults(func=cmd_logs)
+
+    runtime_logs = sub.add_parser("runtime-log-import")
+    runtime_logs.add_argument("--path", type=Path)
+    runtime_logs.add_argument("--limit", type=int, default=5000)
+    runtime_logs.add_argument("--observed-at", default="")
+    runtime_logs.add_argument("--output-root", type=Path, default=Path("tmp/lake"))
+    runtime_logs.add_argument("--dt", default="", help="Landing partition date, defaults to UTC today")
+    runtime_logs.set_defaults(func=cmd_runtime_log_import)
 
     places = sub.add_parser("place-sync")
     places.add_argument("--source", choices=["auto", "overpass", "config"], default="auto")
