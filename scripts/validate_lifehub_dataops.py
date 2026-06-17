@@ -88,6 +88,16 @@ ACTIVE_FIXTURE_SOURCES = {
     "moto_learning_log": ["fixtures/lifehub/moto_learning.csv", "fixtures/lifehub/moto_learning.json"],
     "trade_journal_summary": ["fixtures/lifehub/trade_journal.csv", "fixtures/lifehub/trade_journal.json"],
     "personal_notes_summary": ["fixtures/lifehub/personal_notes.md", "fixtures/lifehub/personal_notes.json"],
+    "training_sessions": ["fixtures/lifehub/training_sessions.json"],
+    "habit_goals": ["fixtures/lifehub/habit_goals.json"],
+    "market_watchlist_snapshot": ["fixtures/lifehub/market_watchlist_snapshot.json"],
+    "github_project_activity": ["fixtures/lifehub/github_project_activity_summary.json"],
+    "learning_activity": ["fixtures/lifehub/learning_activity.json"],
+    "finance_event_calendar": ["fixtures/lifehub/finance_event_calendar.json"],
+    "health_summary": ["fixtures/lifehub/health_summary.json"],
+    "location_area_summary": ["fixtures/lifehub/location_area_summary.json"],
+    "finance_transactions": ["fixtures/lifehub/finance_transactions_summary.json"],
+    "data_source_runs": ["fixtures/lifehub/data_source_runs.json"],
 }
 
 REQUIRED_SOURCE_FIELDS = [

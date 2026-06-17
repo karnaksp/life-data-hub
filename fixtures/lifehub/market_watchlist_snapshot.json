@@ -1,0 +1,12 @@
+[
+  {
+    "observed_at": "2026-06-16T12:00:00+00:00",
+    "symbol_bucket": "broad_us_index",
+    "volatility_bucket": "medium",
+    "direction": "up",
+    "attention_state": "watch",
+    "volatility_score": 54,
+    "relative_volume": 1.2,
+    "change_pct": 0.6
+  }
+]

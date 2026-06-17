@@ -1,0 +1,10 @@
+[
+  {
+    "event_date": "2026-06-17",
+    "event_bucket": "macro_calendar",
+    "impact_bucket": "medium",
+    "watchlist_bucket": "broad_market",
+    "urgency": 5,
+    "days_until": 1
+  }
+]

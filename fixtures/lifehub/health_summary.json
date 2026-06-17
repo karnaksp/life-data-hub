@@ -1,0 +1,12 @@
+[
+  {
+    "metric_date": "2026-06-16",
+    "metric_name": "active_minutes",
+    "metric_value": 72,
+    "unit": "minutes",
+    "device_bucket": "manual_summary",
+    "resting_hr": 58,
+    "hrv_ms": 64,
+    "steps": 9200
+  }
+]

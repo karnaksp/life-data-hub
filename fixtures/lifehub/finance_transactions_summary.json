@@ -1,0 +1,11 @@
+[
+  {
+    "occurred_at": "2026-06-16T10:00:00+00:00",
+    "category_bucket": "sports_equipment",
+    "amount_bucket": "small",
+    "currency": "rub",
+    "account_bucket": "personal_card_bucket",
+    "direction": "outflow",
+    "transaction_count": 1
+  }
+]

@@ -328,7 +328,7 @@ sources:
     privacy_class: private_behavior_summary
     raw_policy: local_raw_only
     local_policy: summarized_landing_only
-    producer: planned-lifehub-training-session-mart
+    producer: lifehub local-file-import
     landing_path: s3a://iceberg/lifehub/landing/training_sessions/dt={dt}/events.jsonl
     bronze_table: iceberg.bronze.lifehub_training_session_events
     silver_table: iceberg.silver.lifehub_training_sessions
@@ -347,7 +347,7 @@ sources:
     privacy_class: private_behavior_summary
     raw_policy: local_raw_only
     local_policy: summarized_landing_only
-    producer: planned-lifehub-habit-goal-import
+    producer: lifehub local-file-import
     landing_path: s3a://iceberg/lifehub/landing/habit_goals/dt={dt}/events.jsonl
     bronze_table: iceberg.bronze.lifehub_habit_goal_events
     silver_table: iceberg.silver.lifehub_habit_goals
@@ -366,7 +366,7 @@ sources:
     privacy_class: public_context
     raw_policy: public_fixture_ok
     local_policy: summarized_landing_only
-    producer: planned-lifehub-market-watchlist-import
+    producer: lifehub local-file-import
     landing_path: s3a://iceberg/lifehub/landing/market_watchlist_snapshot/dt={dt}/events.jsonl
     bronze_table: iceberg.bronze.lifehub_market_watchlist_snapshot_events
     silver_table: iceberg.silver.lifehub_market_watchlist_snapshot
@@ -385,7 +385,7 @@ sources:
     privacy_class: public_context
     raw_policy: public_fixture_ok
     local_policy: summarized_landing_only
-    producer: planned-lifehub-github-project-import
+    producer: lifehub local-file-import
     landing_path: s3a://iceberg/lifehub/landing/github_project_activity/dt={dt}/events.jsonl
     bronze_table: iceberg.bronze.lifehub_github_project_activity_events
     silver_table: iceberg.silver.lifehub_github_project_activity
@@ -404,7 +404,7 @@ sources:
     privacy_class: private_behavior_summary
     raw_policy: local_raw_only
     local_policy: summarized_landing_only
-    producer: planned-lifehub-learning-import
+    producer: lifehub local-file-import
     landing_path: s3a://iceberg/lifehub/landing/learning_activity/dt={dt}/events.jsonl
     bronze_table: iceberg.bronze.lifehub_learning_activity_events
     silver_table: iceberg.silver.lifehub_learning_activity
@@ -423,7 +423,7 @@ sources:
     privacy_class: private_finance_summary
     raw_policy: local_raw_only
     local_policy: summarized_landing_only
-    producer: planned-lifehub-finance-calendar-import
+    producer: lifehub local-file-import
     landing_path: s3a://iceberg/lifehub/landing/finance_event_calendar/dt={dt}/events.jsonl
     bronze_table: iceberg.bronze.lifehub_finance_event_calendar_events
     silver_table: iceberg.silver.lifehub_finance_event_calendar
@@ -442,7 +442,7 @@ sources:
     privacy_class: private_health_summary
     raw_policy: local_raw_only
     local_policy: summarized_landing_only
-    producer: planned-lifehub-health-summary-import
+    producer: lifehub local-file-import
     landing_path: s3a://iceberg/lifehub/landing/health_summary/dt={dt}/events.jsonl
     bronze_table: iceberg.bronze.lifehub_health_summary_events
     silver_table: iceberg.silver.lifehub_health_summary
@@ -461,7 +461,7 @@ sources:
     privacy_class: private_location_summary
     raw_policy: local_raw_only
     local_policy: summarized_landing_only
-    producer: planned-lifehub-location-area-import
+    producer: lifehub local-file-import
     landing_path: s3a://iceberg/lifehub/landing/location_area_summary/dt={dt}/events.jsonl
     bronze_table: iceberg.bronze.lifehub_location_area_summary_events
     silver_table: iceberg.silver.lifehub_location_area_summary
@@ -480,7 +480,7 @@ sources:
     privacy_class: derived_context
     raw_policy: public_fixture_ok
     local_policy: summarized_landing_only
-    producer: planned-lifehub-source-status
+    producer: lifehub local-file-import
     landing_path: s3a://iceberg/lifehub/landing/data_source_runs/dt={dt}/events.jsonl
     bronze_table: iceberg.bronze.lifehub_data_source_run_events
     silver_table: iceberg.silver.lifehub_data_source_runs
@@ -488,9 +488,9 @@ sources:
     pii: false
     commit_policy: evidence may include source counts, freshness and quality flags only
     onboarding_contract:
-      required_fields: [run_at, source_name, status, row_count, imported_at]
-      event_time_field: run_at
-      idempotency_key: [run_at, source_name]
+      required_fields: [observed_at, source_name, status, row_count, imported_at]
+      event_time_field: observed_at
+      idempotency_key: [observed_at, source_name]
 
   location_visits:
     tier: tier_3_sensitive_life
@@ -537,7 +537,7 @@ sources:
     privacy_class: private_finance_summary
     raw_policy: local_raw_only
     local_policy: summarized_landing_only
-    producer: planned-lifehub-finance-import
+    producer: lifehub local-file-import
     landing_path: s3a://iceberg/lifehub/landing/finance_transactions/dt={dt}/events.jsonl
     bronze_table: iceberg.bronze.lifehub_finance_transaction_events
     silver_table: iceberg.silver.lifehub_finance_daily
@@ -545,9 +545,9 @@ sources:
     pii: true
     commit_policy: never commit bank exports, account numbers, merchant strings or transaction memos
     onboarding_contract:
-      required_fields: [posted_date, category, amount_bucket, currency, account_bucket, imported_at]
-      event_time_field: posted_date
-      idempotency_key: [posted_date, category, amount_bucket, account_bucket]
+      required_fields: [occurred_at, category_bucket, amount_bucket, currency, account_bucket, imported_at]
+      event_time_field: occurred_at
+      idempotency_key: [occurred_at, category_bucket, amount_bucket, account_bucket]
 
   communications_metadata:
     tier: tier_3_sensitive_life

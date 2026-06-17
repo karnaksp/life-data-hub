@@ -28,22 +28,22 @@ The registry is intentionally broader than the current runnable fixtures. Tier 1
 | `custom_life_events` | Tier 2 | Extensibility | `private_behavior_summary` | Active generic importer | Redacted generic metrics for new source experiments. |
 | `calendar_events` | Tier 2 | Schedule | `private_behavior_summary` | Active local fixture | Busy windows, duration, commitment bucket; no titles, attendees, or locations. |
 | `moto_learning_log` | Tier 2 | Moto learning | `private_behavior_summary` | Active local fixture | Lesson type, exercise bucket, confidence, errors count, next focus tag; no raw instructor notes. |
-| `training_sessions` | Tier 2 | Sports | `private_behavior_summary` | Planned | Activity type, duration, intensity, load, result, and coarse venue bucket. |
-| `habit_goals` | Tier 2 | Habits | `private_behavior_summary` | Planned | Weekly target, status, streak, skipped reason bucket, and review date. |
+| `training_sessions` | Tier 2 | Sports | `private_behavior_summary` | Active local fixture | Activity type, duration, intensity, load, result, and coarse venue bucket. |
+| `habit_goals` | Tier 2 | Habits | `private_behavior_summary` | Active local fixture | Weekly target, status, streak, skipped reason bucket, and review date. |
 | `personal_notes_summary` | Tier 2 | Notes/learning | `private_behavior_summary` | Active local fixture | Redacted note topic, sentiment bucket, action count, and source file bucket; no raw note body. |
 | `trade_journal_summary` | Tier 3 | Trading journal | `private_finance_summary` | Active local fixture | Synthetic or redacted trade setup, risk bucket, result, and lessons; no broker account ids. |
-| `market_watchlist_snapshot` | Tier 1 | Market context | `public_context` | Planned | Watchlist symbol bucket, volatility state, and public context signals. |
-| `github_project_activity` | Tier 1 | Career/projects | `public_context` | Planned | Repo activity counts, focus area, maintenance gaps, and open-source signals. |
-| `learning_activity` | Tier 2 | Learning | `private_behavior_summary` | Planned | Study session duration, topic bucket, progress, and next action. |
-| `finance_event_calendar` | Tier 2 | Finance calendar | `private_finance_summary` | Planned | Event buckets and dates from public or local finance calendars; no broker account or position identifiers. |
-| `health_summary` | Tier 3 | Health | `private_health_summary` | Planned | Daily aggregate recovery, load, and wellness summaries. |
-| `location_area_summary` | Tier 3 | Location | `private_location_summary` | Planned | Broad area bucket, dwell minutes, movement mode, and precision bucket. |
+| `market_watchlist_snapshot` | Tier 1 | Market context | `public_context` | Active local fixture | Watchlist symbol bucket, volatility state, and public context signals. |
+| `github_project_activity` | Tier 1 | Career/projects | `public_context` | Active local fixture | Repo activity counts, focus area, maintenance gaps, and open-source signals. |
+| `learning_activity` | Tier 2 | Learning | `private_behavior_summary` | Active local fixture | Study session duration, topic bucket, progress, and next action. |
+| `finance_event_calendar` | Tier 2 | Finance calendar | `private_finance_summary` | Active local fixture | Event buckets and dates from public or local finance calendars; no broker account or position identifiers. |
+| `health_summary` | Tier 3 | Health | `private_health_summary` | Active local fixture | Daily aggregate recovery, load, and wellness summaries. |
+| `location_area_summary` | Tier 3 | Location | `private_location_summary` | Active local fixture | Broad area bucket, dwell minutes, movement mode, and precision bucket. |
 | `data_source_runs` | Tier 1 | DataOps | `derived_context` | Active validator output | Run status, freshness, record counts, quality flags, and missing source gaps. |
 | `browser_and_app_usage` | Tier 2 | Digital activity | `private_behavior_summary` | Planned | Category-duration buckets; no URLs, titles, or search queries. |
 | `tasks_and_projects` | Tier 2 | Productivity | `private_behavior_summary` | Planned | Status, priority, effort, and project buckets; no task text or client names. |
 | `location_visits` | Tier 3 | Location | `private_location_summary` | Planned | Coarse place buckets, dwell time, movement mode, precision bucket. |
 | `health_metrics` | Tier 3 | Health | `private_health_summary` | Planned | Daily metric summaries and device class, not raw device exports. |
-| `finance_transactions` | Tier 3 | Finance | `private_finance_summary` | Planned | Category, currency, amount bucket, and account bucket. |
+| `finance_transactions` | Tier 3 | Finance | `private_finance_summary` | Active local fixture | Category, currency, amount bucket, and account bucket. |
 | `communications_metadata` | Tier 3 | Communications | `private_communications_summary` | Planned | Channel, direction, contact bucket, and counts only. |
 | `identity_documents` | Tier 4 | Identity | `private_identity_document` | Planned pointer-only | Document bucket, status, expiry month, reminder date, local pointer id. |
 | `secrets_inventory` | Tier 4 | Security | `secret_credential` | Planned pointer-only | Rotation due month, age bucket, vault pointer id; never secret material. |

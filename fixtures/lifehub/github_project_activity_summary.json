@@ -1,0 +1,12 @@
+[
+  {
+    "observed_at": "2026-06-16T21:00:00+00:00",
+    "repo_bucket": "life_data_hub",
+    "focus_bucket": "data_engineering",
+    "maintenance_state": "active",
+    "activity_count": 7,
+    "commit_count": 2,
+    "issue_count": 3,
+    "pr_count": 2
+  }
+]

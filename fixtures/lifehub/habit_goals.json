@@ -1,0 +1,11 @@
+[
+  {
+    "updated_at": "2026-06-16T20:00:00+00:00",
+    "goal_bucket": "weekly_skate",
+    "target_count": 2,
+    "done_count": 1,
+    "streak_days": 3,
+    "status": "open",
+    "skipped_reason_bucket": "none"
+  }
+]

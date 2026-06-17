@@ -1,0 +1,12 @@
+[
+  {
+    "occurred_at": "2026-06-16T17:00:00+00:00",
+    "activity_type": "skate",
+    "duration_minutes": 75,
+    "load_score": 68,
+    "intensity": 7,
+    "fatigue_score": 4,
+    "result": "good",
+    "venue_bucket": "public_outdoor_spot"
+  }
+]

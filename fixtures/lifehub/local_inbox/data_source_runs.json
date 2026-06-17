@@ -1,0 +1,12 @@
+[
+  {
+    "observed_at": "2026-06-16T22:00:00+00:00",
+    "source_name": "weather_forecast",
+    "status": "fresh",
+    "quality_state": "passed",
+    "freshness_minutes": 45,
+    "row_count": 112,
+    "error_count": 0,
+    "duration_seconds": 12
+  }
+]

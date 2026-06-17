@@ -14,7 +14,23 @@ from lifehub.lake import lake_envelope
 from lifehub.sleep import load_sleep_fixture, normalize_sleep_rows, sleep_quality_events
 
 
-LOCAL_KINDS = {"ics", "sleep", "moto_learning", "trade_journal", "personal_notes"}
+LOCAL_KINDS = {
+    "ics",
+    "sleep",
+    "moto_learning",
+    "trade_journal",
+    "personal_notes",
+    "training_sessions",
+    "habit_goals",
+    "market_watchlist_snapshot",
+    "github_project_activity",
+    "learning_activity",
+    "finance_event_calendar",
+    "health_summary",
+    "location_area_summary",
+    "finance_transactions",
+    "data_source_runs",
+}
 
 
 def import_local_file(path: Path, *, kind: str = "auto") -> list[dict]:
@@ -29,6 +45,8 @@ def import_local_file(path: Path, *, kind: str = "auto") -> list[dict]:
         return trade_journal_events(load_rows(path), source_file=path.name)
     if selected == "personal_notes":
         return personal_note_events(path)
+    if selected in SUMMARY_IMPORTERS:
+        return summary_events(selected, load_rows(path), source_file=path.name)
     raise ValueError(f"Unsupported local file kind for {path}: {selected}")
 
 
@@ -53,10 +71,30 @@ def detect_local_kind(path: Path) -> str:
         return ""
     if "sleep" in stem:
         return "sleep"
-    if "moto" in stem or "learning" in stem:
+    if "moto" in stem:
         return "moto_learning"
     if "trade" in stem or "journal" in stem:
         return "trade_journal"
+    if "training" in stem or "session" in stem:
+        return "training_sessions"
+    if "habit" in stem or "goal" in stem:
+        return "habit_goals"
+    if "watchlist" in stem or "market" in stem:
+        return "market_watchlist_snapshot"
+    if "github" in stem or "project" in stem:
+        return "github_project_activity"
+    if "learning" in stem or "study" in stem:
+        return "learning_activity"
+    if "finance_event" in stem or "earnings" in stem:
+        return "finance_event_calendar"
+    if "health" in stem:
+        return "health_summary"
+    if "location" in stem or "area" in stem or "movement" in stem:
+        return "location_area_summary"
+    if "expense" in stem or "transaction" in stem or "finance" in stem:
+        return "finance_transactions"
+    if "source_run" in stem or "data_source" in stem or "freshness" in stem:
+        return "data_source_runs"
     if "note" in name or "summary" in name:
         return "personal_notes"
     return detect_json_kind(path) if suffix == ".json" else ""
@@ -75,6 +113,26 @@ def detect_json_kind(path: Path) -> str:
         return "moto_learning"
     if keys & {"symbol", "instrument", "pnl", "pnl_r", "setup", "entry_time"}:
         return "trade_journal"
+    if {"activity_type", "duration_minutes", "load_score"} <= keys:
+        return "training_sessions"
+    if {"goal_bucket", "target_count", "done_count"} <= keys:
+        return "habit_goals"
+    if {"symbol_bucket", "volatility_bucket"} <= keys:
+        return "market_watchlist_snapshot"
+    if {"repo_bucket", "activity_count", "focus_bucket"} <= keys:
+        return "github_project_activity"
+    if {"topic_bucket", "duration_minutes", "progress_state"} <= keys:
+        return "learning_activity"
+    if {"event_date", "event_bucket", "urgency"} <= keys:
+        return "finance_event_calendar"
+    if {"metric_date", "metric_name", "metric_value", "unit"} <= keys:
+        return "health_summary"
+    if {"area_bucket", "dwell_minutes", "movement_mode"} <= keys:
+        return "location_area_summary"
+    if {"category_bucket", "amount_bucket", "currency"} <= keys:
+        return "finance_transactions"
+    if {"source_name", "status", "freshness_minutes"} <= keys:
+        return "data_source_runs"
     if keys & {"summary", "title", "body", "tags"}:
         return "personal_notes"
     return ""
@@ -309,6 +367,148 @@ def personal_note_events(path: Path) -> list[dict]:
                 source_type="local_markdown_json_summary",
                 raw_policy="local_raw_only",
                 local_policy="summarized_landing_only",
+                payload=drop_none(payload),
+            )
+        )
+    return events
+
+
+SUMMARY_IMPORTERS = {
+    "training_sessions": {
+        "event_type": "training_session_summary",
+        "event_time_fields": ("occurred_at", "started_at", "date"),
+        "privacy_class": "private_behavior_summary",
+        "source_tier": "tier_2_personal_context",
+        "source_type": "derived_training_session",
+        "metrics": ("duration_minutes", "load_score", "intensity", "fatigue_score"),
+        "labels": ("activity_type", "result", "venue_bucket"),
+    },
+    "habit_goals": {
+        "event_type": "habit_goal_progress",
+        "event_time_fields": ("updated_at", "date"),
+        "privacy_class": "private_behavior_summary",
+        "source_tier": "tier_2_personal_context",
+        "source_type": "local_config_and_manual_events",
+        "metrics": ("target_count", "done_count", "streak_days"),
+        "labels": ("goal_bucket", "status", "skipped_reason_bucket"),
+    },
+    "market_watchlist_snapshot": {
+        "event_type": "market_watchlist_snapshot",
+        "event_time_fields": ("observed_at", "date"),
+        "privacy_class": "public_context",
+        "source_tier": "tier_1_foundation",
+        "source_type": "market_data_api",
+        "metrics": ("volatility_score", "relative_volume", "change_pct"),
+        "labels": ("symbol_bucket", "volatility_bucket", "direction", "attention_state"),
+    },
+    "github_project_activity": {
+        "event_type": "github_project_activity",
+        "event_time_fields": ("observed_at", "date"),
+        "privacy_class": "public_context",
+        "source_tier": "tier_1_foundation",
+        "source_type": "public_api",
+        "metrics": ("activity_count", "commit_count", "issue_count", "pr_count"),
+        "labels": ("repo_bucket", "focus_bucket", "maintenance_state"),
+    },
+    "learning_activity": {
+        "event_type": "learning_activity",
+        "event_time_fields": ("occurred_at", "date"),
+        "privacy_class": "private_behavior_summary",
+        "source_tier": "tier_2_personal_context",
+        "source_type": "local_notes_or_project_summary",
+        "metrics": ("duration_minutes", "progress_pct", "artifact_count"),
+        "labels": ("topic_bucket", "progress_state", "next_action_bucket"),
+    },
+    "finance_event_calendar": {
+        "event_type": "finance_event_calendar_item",
+        "event_time_fields": ("event_date", "date"),
+        "privacy_class": "private_finance_summary",
+        "source_tier": "tier_2_personal_context",
+        "source_type": "local_calendar_or_public_finance_events",
+        "metrics": ("urgency", "days_until"),
+        "labels": ("event_bucket", "impact_bucket", "watchlist_bucket"),
+    },
+    "health_summary": {
+        "event_type": "health_metric_summary",
+        "event_time_fields": ("metric_date", "date"),
+        "privacy_class": "private_health_summary",
+        "source_tier": "tier_3_sensitive_life",
+        "source_type": "wearable_or_health_export",
+        "metrics": ("metric_value", "resting_hr", "hrv_ms", "steps", "active_minutes"),
+        "labels": ("metric_name", "unit", "device_bucket"),
+    },
+    "location_area_summary": {
+        "event_type": "location_area_summary",
+        "event_time_fields": ("occurred_at", "date"),
+        "privacy_class": "private_location_summary",
+        "source_tier": "tier_3_sensitive_life",
+        "source_type": "local_location_history",
+        "metrics": ("dwell_minutes", "distance_km"),
+        "labels": ("area_bucket", "movement_mode", "city_bucket", "precision_bucket"),
+    },
+    "finance_transactions": {
+        "event_type": "finance_transaction_summary",
+        "event_time_fields": ("occurred_at", "booked_at", "date"),
+        "privacy_class": "private_finance_summary",
+        "source_tier": "tier_3_sensitive_life",
+        "source_type": "local_bank_or_budget_export",
+        "metrics": ("transaction_count",),
+        "labels": ("category_bucket", "amount_bucket", "currency", "account_bucket", "direction"),
+    },
+    "data_source_runs": {
+        "event_type": "data_source_run",
+        "event_time_fields": ("observed_at", "started_at", "date"),
+        "privacy_class": "derived_context",
+        "source_tier": "tier_1_foundation",
+        "source_type": "pipeline_observability",
+        "metrics": ("freshness_minutes", "row_count", "error_count", "duration_seconds"),
+        "labels": ("source_name", "status", "quality_state"),
+    },
+}
+
+
+def summary_events(kind: str, rows: list[dict[str, Any]], *, source_file: str) -> list[dict]:
+    config = SUMMARY_IMPORTERS[kind]
+    imported_at = datetime.now(timezone.utc).isoformat()
+    events = []
+    for index, row in enumerate(rows, start=1):
+        event_time = coalesce_time(row, *config["event_time_fields"])
+        if not event_time:
+            raise ValueError(f"{kind} row {index} is missing one of {config['event_time_fields']}.")
+        labels = {field: clean_label(row.get(field)) for field in config["labels"] if clean_label(row.get(field))}
+        metrics = {
+            field: optional_float(row.get(field))
+            for field in config["metrics"]
+            if row.get(field) not in (None, "")
+        }
+        payload = {
+            "event_time": event_time,
+            "source_file_hash": stable_hash(source_file),
+            "row_number": index,
+            "imported_at": imported_at,
+            **labels,
+            **metrics,
+        }
+        if kind == "data_source_runs" and "source_name" in labels:
+            payload["tracked_source_hash"] = stable_hash(labels["source_name"])
+        events.append(
+            lake_envelope(
+                source_name=kind,
+                event_type=config["event_type"],
+                event_time=event_time,
+                privacy_class=config["privacy_class"],
+                source_tier=config["source_tier"],
+                source_type=config["source_type"],
+                raw_policy="local_raw_only" if kind != "market_watchlist_snapshot" else "public_fixture_ok",
+                local_policy="summarized_landing_only",
+                payload_summary={
+                    "source_file_hash": stable_hash(source_file),
+                    "row_number": index,
+                    "labels": labels,
+                },
+                metrics=metrics,
+                tags=[kind, str(config["source_type"]), *labels.values()],
+                quality_flags=["summary_only", "raw_local_only"],
                 payload=drop_none(payload),
             )
         )

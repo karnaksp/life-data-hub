@@ -145,21 +145,21 @@ source_architecture:
       - custom_life_events
       - calendar_events
       - moto_learning_log
-      - personal_notes_summary
-      - trade_journal_summary
-      - data_source_runs
-    planned_connector_sources:
       - training_sessions
       - habit_goals
+      - personal_notes_summary
+      - trade_journal_summary
       - market_watchlist_snapshot
       - github_project_activity
       - learning_activity
       - finance_event_calendar
       - health_summary
       - location_area_summary
+      - finance_transactions
+      - data_source_runs
+    planned_connector_sources:
       - location_visits
       - health_metrics
-      - finance_transactions
       - communications_metadata
       - browser_and_app_usage
       - tasks_and_projects

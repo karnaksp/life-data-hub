@@ -18,6 +18,7 @@ from lifehub.context import build_daily_context_profile, extract_confidence_and_
 from lifehub.diary import capture_to_activity_log, command_name, parse_capture_command, parse_log_command
 from lifehub.feedback import feedback_keyboard, parse_feedback_callback, parse_feedback_command
 from lifehub.generic_sources import custom_source_events, load_json_rows
+from lifehub.local_files import detect_local_kind, import_local_file, scan_inbox
 from lifehub.places import load_spot_fixture
 from lifehub.recommendations import (
     build_recommendations,
@@ -430,6 +431,54 @@ class LakeExportTests(unittest.TestCase):
         self.assertEqual(events[0]["source_name"], "sleep_quality")
         self.assertEqual(events[0]["event_type"], "sleep_quality_night")
         self.assertNotIn("note", str(events).lower())
+
+
+class LocalSummaryImportTests(unittest.TestCase):
+    def test_summary_fixtures_auto_detect_and_land(self) -> None:
+        cases = {
+            "training_sessions.json": "training_sessions",
+            "habit_goals.json": "habit_goals",
+            "market_watchlist_snapshot.json": "market_watchlist_snapshot",
+            "github_project_activity_summary.json": "github_project_activity",
+            "learning_activity.json": "learning_activity",
+            "finance_event_calendar.json": "finance_event_calendar",
+            "health_summary.json": "health_summary",
+            "location_area_summary.json": "location_area_summary",
+            "finance_transactions_summary.json": "finance_transactions",
+            "data_source_runs.json": "data_source_runs",
+        }
+        for fixture_name, source_name in cases.items():
+            path = FIXTURES / fixture_name
+            self.assertEqual(detect_local_kind(path), source_name)
+            events = import_local_file(path)
+            self.assertEqual(len(events), 1)
+            self.assertEqual(events[0]["source_name"], source_name)
+            self.assertIn("summary_only", events[0]["quality_flags"])
+            serialized = json.dumps(events[0], sort_keys=True)
+            for forbidden in ["home_address", "account_id", "account_number", "chat_id", "api_key"]:
+                self.assertNotIn(forbidden, serialized)
+
+    def test_inbox_scan_imports_expanded_domain_coverage(self) -> None:
+        imports = scan_inbox(FIXTURES / "local_inbox")
+        observed = {event["source_name"] for _path, _kind, events in imports for event in events}
+        for source_name in {
+            "calendar_events",
+            "moto_learning_log",
+            "personal_notes_summary",
+            "sleep_quality",
+            "trade_journal_summary",
+            "training_sessions",
+            "habit_goals",
+            "market_watchlist_snapshot",
+            "github_project_activity",
+            "learning_activity",
+            "finance_event_calendar",
+            "health_summary",
+            "location_area_summary",
+            "finance_transactions",
+            "data_source_runs",
+        }:
+            self.assertIn(source_name, observed)
 
 
 class DiaryTests(unittest.TestCase):

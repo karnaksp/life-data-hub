@@ -1,0 +1,11 @@
+[
+  {
+    "occurred_at": "2026-06-16T18:00:00+00:00",
+    "area_bucket": "spb_public_centre",
+    "movement_mode": "walk",
+    "city_bucket": "saint_petersburg",
+    "precision_bucket": "coarse_area",
+    "dwell_minutes": 45,
+    "distance_km": 2.4
+  }
+]

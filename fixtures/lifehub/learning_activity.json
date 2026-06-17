@@ -1,0 +1,11 @@
+[
+  {
+    "occurred_at": "2026-06-16T19:30:00+00:00",
+    "topic_bucket": "lakehouse_ops",
+    "duration_minutes": 45,
+    "progress_state": "reviewed",
+    "progress_pct": 60,
+    "artifact_count": 1,
+    "next_action_bucket": "write_runbook"
+  }
+]
