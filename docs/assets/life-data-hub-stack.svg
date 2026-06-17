@@ -30,7 +30,7 @@
     </style>
   </defs>
 
-  <rect width="1440" height="980" rx="28" fill="url(#bg)"/>
+  <rect width="100%" height="100%" rx="28" fill="url(#bg)"/>
   <text x="54" y="66" class="title">Life Data Hub: что за чем идёт и зачем</text>
   <text x="56" y="98" class="subtitle">От источников и дневника до lakehouse, проверок качества и персонального решения “что делать сегодня”.</text>
 
