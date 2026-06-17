@@ -1,6 +1,12 @@
-# Evidence Assets
+# Assets
 
-Store runtime evidence captured from the retail CDC run here.
+Store README diagrams and runtime evidence captured from local smoke runs here.
+
+## Product diagrams
+
+- `life-data-hub-stack.svg` - visual stack map embedded in the main README.
+
+## Runtime evidence
 
 Recommended files:
 

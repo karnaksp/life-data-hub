@@ -23,6 +23,7 @@ REQUIRED_FILES = [
     "docker-compose.lakehouse-smoke.yml",
     "docs/retail-cdc-runbook.md",
     "docs/assets/README.md",
+    "docs/assets/life-data-hub-stack.svg",
     "docs/data-engineering-stack.md",
     "docs/evidence/retail-cdc-evidence.md",
     "scripts/capture_clickhouse_evidence.py",

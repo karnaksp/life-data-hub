@@ -8,6 +8,12 @@
 
 Проект построен как реальный data-продукт, а не набор разрозненных скриптов. Данные входят через контролируемые источники, сохраняются в operational/event log, попадают в lakehouse, проверяются контрактами и становятся основой для аналитики, Telegram-дайджеста и будущих доменов.
 
+## Схема стека
+
+![Life Data Hub stack diagram](docs/assets/life-data-hub-stack.svg)
+
+Схема показывает, как разные классы источников проходят единый путь: public APIs, Telegram diary, локальные файлы и сигналы проектов попадают в ingestion layer, затем в Postgres, ClickHouse и lakehouse, обрабатываются Spark/Trino/dbt и управляются Airflow/Temporal/DataOps проверками. На выходе остаются не сырые данные, а продуктовые поверхности: Telegram digest, cockpit, evidence и lineage.
+
 ## Что уже есть
 
 - **LifeHub** - персональный домен для спорта, outdoor readiness и восстановления.
