@@ -1,0 +1,421 @@
+name: lifehub_sports_wellbeing
+version: 0.1.0
+owner: local-data-engineering
+privacy: local_only
+domains:
+  - sports
+  - wellbeing
+  - outdoor_readiness
+
+sources:
+  open_meteo_forecast:
+    type: public_api
+    freshness_slo_minutes: 180
+    contains_personal_data: false
+  overpass_spots:
+    type: public_api
+    freshness_slo_minutes: 10080
+    contains_personal_data: false
+  telegram_diary:
+    type: manual_event_log
+    freshness_slo_minutes: 1440
+    contains_personal_data: true
+    storage_policy: local_only
+  github_repo_activity:
+    type: public_api
+    freshness_slo_minutes: 1440
+    contains_personal_data: false
+    storage_policy: compact_context_events_only
+  alpaca_market_snapshot:
+    type: market_data_api
+    freshness_slo_minutes: 240
+    contains_personal_data: false
+    storage_policy: compact_context_events_only
+  lifehub_preferences:
+    type: local_config
+    freshness_slo_minutes: 10080
+    contains_personal_data: false
+    storage_policy: privacy_safe_weekly_targets
+  weekly_review:
+    type: derived_report
+    freshness_slo_minutes: 10080
+    contains_personal_data: false
+    storage_policy: aggregate_metrics_only
+  daily_context_profile:
+    type: derived_decision_profile
+    freshness_slo_minutes: 180
+    contains_personal_data: false
+    storage_policy: aggregate_metrics_only
+  lifehub_lakehouse:
+    type: medallion_lakehouse
+    freshness_slo_minutes: 1440
+    contains_personal_data: mixed
+    storage_policy: privacy_safe_event_envelopes
+  activity_files:
+    type: local_file_import
+    freshness_slo_minutes: 1440
+    contains_personal_data: true
+    storage_policy: public_fixtures_only_real_files_local
+
+tables:
+  postgres.life_spots:
+    grain: one row per configured or OSM public spot
+    primary_key: [spot_id]
+    required_columns:
+      - spot_id
+      - label
+      - latitude
+      - longitude
+      - tags
+      - source
+      - updated_at
+    checks:
+      - label_not_empty
+      - latitude_between_minus_90_and_90
+      - longitude_between_minus_180_and_180
+      - no_private_address_labels
+  postgres.life_activity_log:
+    grain: one row per manually logged activity session
+    primary_key: [activity_id]
+    required_columns:
+      - activity_type
+      - intensity
+      - mood
+      - fatigue
+      - result
+      - logged_at
+    allowed_activity_types:
+      - skate
+      - snowboard
+      - volleyball
+      - moto_lesson
+      - gym
+      - walk
+      - rest
+    allowed_results:
+      - good
+      - ok
+      - bad
+      - skipped
+    checks:
+      - intensity_between_1_and_10
+      - mood_between_1_and_10
+      - fatigue_between_1_and_10
+      - no_raw_export_in_public_evidence
+  clickhouse.analytics.life_weather_hourly:
+    grain: one row per forecast hour per configured location
+    primary_key: [location_id, forecast_time, fetched_at]
+    required_columns:
+      - location_id
+      - forecast_time
+      - temperature_c
+      - precipitation_mm
+      - rain_mm
+      - snowfall_cm
+      - snow_depth_cm
+      - wind_speed_kmh
+      - wind_gust_kmh
+      - visibility_m
+      - is_day
+      - fetched_at
+    checks:
+      - forecast_time_not_null
+      - temperature_reasonable_for_spb
+      - precipitation_non_negative
+      - wind_non_negative
+  clickhouse.analytics.life_readiness_scores:
+    grain: one row per computed activity score per location
+    primary_key: [activity, location_id, computed_at]
+    required_columns:
+      - activity
+      - location_id
+      - score
+      - decision
+      - explanation
+      - computed_at
+    checks:
+      - score_between_0_and_100
+      - decision_in_go_caution_skip
+      - explanation_not_empty
+
+  postgres.life_recommendation_events:
+    grain: one row per generated personal recommendation
+    primary_key: [recommendation_id]
+    required_columns:
+      - recommendation_type
+      - activity
+      - location_id
+      - score
+      - decision
+      - reasons
+      - generated_at
+    checks:
+      - score_between_0_and_100
+      - decision_in_go_caution_recover
+      - reasons_not_empty
+
+  clickhouse.analytics.life_recommendation_events:
+    grain: one analytical recommendation event per activity and location
+    primary_key: [recommendation_type, activity, location_id, generated_at]
+    required_columns:
+      - recommendation_type
+      - activity
+      - location_id
+      - score
+      - decision
+      - reasons
+      - generated_at
+    checks:
+      - score_between_0_and_100
+      - decision_in_go_caution_recover
+      - reasons_not_empty
+
+  postgres.life_decision_feedback:
+    grain: one row per user feedback event about a recommendation
+    primary_key: [feedback_id]
+    required_columns:
+      - activity
+      - action
+      - created_at
+    allowed_actions:
+      - followed
+      - skipped
+      - changed
+    checks:
+      - action_in_allowed_values
+      - result_in_allowed_values_when_present
+
+  clickhouse.analytics.life_decision_feedback_events:
+    grain: one analytical copy per recommendation feedback event
+    primary_key: [activity, action, created_at]
+    required_columns:
+      - activity
+      - action
+      - created_at
+    allowed_actions:
+      - followed
+      - skipped
+      - changed
+    checks:
+      - action_in_allowed_values
+      - result_in_allowed_values_when_present
+
+  clickhouse.analytics.life_activity_feedback_profile_v:
+    grain: one thirty-day aggregate feedback profile per activity
+    purpose: recommendation personalization
+    primary_key: [activity]
+    required_columns:
+      - activity
+      - feedback_events
+      - followed_events
+      - skipped_events
+      - good_results
+      - bad_results
+      - follow_rate
+      - latest_feedback_at
+    checks:
+      - follow_rate_between_0_and_1
+      - no_feedback_notes_or_raw_text
+
+  postgres.life_signal_events:
+    grain: one row per imported context signal
+    primary_key: [signal_id]
+    required_columns:
+      - signal_id
+      - domain
+      - source
+      - title
+      - direction
+      - urgency
+      - confidence
+      - occurred_at
+      - ingested_at
+    allowed_domains:
+      - market
+      - github
+      - career
+      - wellbeing
+      - system
+    checks:
+      - urgency_between_1_and_10
+      - confidence_between_1_and_100
+      - no_credentials_or_raw_external_payloads
+
+  clickhouse.analytics.life_signal_events:
+    grain: one analytical context signal per source event
+    primary_key: [domain, source, signal_id]
+    required_columns:
+      - signal_id
+      - domain
+      - source
+      - title
+      - direction
+      - urgency
+      - confidence
+      - occurred_at
+      - ingested_at
+    allowed_domains:
+      - market
+      - github
+      - career
+      - wellbeing
+      - system
+    checks:
+      - urgency_between_1_and_10
+      - confidence_between_1_and_100
+      - no_credentials_or_raw_external_payloads
+
+  postgres.life_daily_context_profiles:
+    grain: one privacy-safe personal context profile per local date and timezone
+    primary_key: [profile_date, timezone]
+    purpose: daily context profile for useful real-life recommendations
+    required_columns:
+      - profile_date
+      - timezone
+      - top_activity
+      - top_decision
+      - top_score
+      - readiness_state
+      - sessions_7d
+      - useful_decision_days_7d
+      - follow_rate_7d
+      - open_goal_count
+      - signal_count_7d
+      - context_summary
+      - generated_at
+    checks:
+      - top_score_between_0_and_100
+      - no_raw_diary_notes
+      - no_telegram_token
+
+  clickhouse.analytics.life_daily_context_profiles:
+    grain: one analytical daily context profile per generation run
+    primary_key: [profile_date, timezone, generated_at]
+    purpose: product-level decision intelligence mart input
+    required_columns:
+      - profile_date
+      - timezone
+      - top_activity
+      - top_decision
+      - top_score
+      - readiness_state
+      - sessions_7d
+      - useful_decision_days_7d
+      - follow_rate_7d
+      - open_goal_count
+      - signal_count_7d
+      - context_summary
+      - generated_at
+    checks:
+      - top_score_between_0_and_100
+      - follow_rate_between_0_and_1
+      - no_raw_diary_notes
+
+  iceberg.bronze.lifehub_events:
+    grain: one privacy-safe LifeHub event envelope per source event or aggregate
+    primary_key: [source_name, event_type, event_time, ingested_at]
+    purpose: lifehub lakehouse landing-to-bronze contract
+    required_columns:
+      - lake_version
+      - source_name
+      - event_type
+      - event_time
+      - ingested_at
+      - privacy_class
+      - json_payload
+      - landing_file
+      - loaded_at
+    checks:
+      - source_name_not_empty
+      - no_telegram_token
+      - no_raw_diary_notes
+
+  iceberg.silver.lifehub_events:
+    grain: one validated LifeHub event envelope with non-null source, type and event time
+    primary_key: [source_name, event_type, event_time, ingested_at]
+    purpose: typed lakehouse events for reusable personal analytics
+    required_columns:
+      - source_name
+      - event_type
+      - event_time
+      - privacy_class
+      - json_payload
+    checks:
+      - event_time_not_null
+      - source_name_not_empty
+
+  iceberg.gold.lifehub_decision_events:
+    grain: one decision-oriented derived LifeHub event
+    primary_key: [source_name, event_type, event_time, ingested_at]
+    purpose: DWH-ready decision intelligence layer
+    required_columns:
+      - source_name
+      - event_type
+      - event_time
+      - json_payload
+    checks:
+      - decision_events_only
+
+  lake.landing.lifehub.activity_files:
+    grain: one privacy-safe activity file summary envelope
+    primary_key: [source_file, started_at]
+    purpose: extensible local route/training file source onboarding
+    required_columns:
+      - source_file
+      - activity_type
+      - started_at
+      - duration_minutes
+      - distance_km
+      - point_count
+      - imported_at
+    checks:
+      - distance_non_negative
+      - duration_non_negative
+      - public_fixture_only
+      - real_route_files_stay_local
+
+  lake.landing.lifehub.sleep_quality:
+    grain: one privacy-safe night-level sleep quality summary envelope
+    primary_key: [source, woke_at]
+    purpose: recovery source onboarding for training and daily decision personalization
+    required_columns:
+      - slept_at
+      - woke_at
+      - duration_minutes
+      - quality_score
+      - recovery_score
+      - sleep_efficiency
+      - source
+      - imported_at
+    checks:
+      - duration_positive
+      - quality_score_between_1_and_100
+      - recovery_score_between_1_and_100
+      - no_raw_sleep_notes
+
+  lake.landing.lifehub.custom_life_events:
+    grain: one privacy-safe generic local JSON event envelope
+    primary_key: [domain, metric_name, occurred_at]
+    purpose: low-friction source onboarding for future life domains before dedicated connectors exist
+    required_columns:
+      - occurred_at
+      - domain
+      - metric_name
+      - metric_value
+    checks:
+      - source_must_exist_in_registry
+      - event_time_not_null
+      - no_notes_addresses_tokens_or_raw_personal_text
+
+public_evidence_policy:
+  allowed:
+    - aggregate_counts
+    - service_status
+    - schema_presence
+    - freshness_status
+  forbidden:
+    - telegram_token
+    - telegram_chat_id
+    - raw_diary_notes
+    - pain_text
+    - precise_private_addresses

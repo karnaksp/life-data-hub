@@ -8,6 +8,8 @@ from pathlib import Path
 
 from validate_bronze_contract import validate_bronze_contract
 from generate_evidence_bundle import EVIDENCE_PATH, render_evidence_bundle
+from validate_lifehub_dataops import main as validate_lifehub_dataops_main
+from validate_lifehub_contract import main as validate_lifehub_main
 from validate_runtime_contract import validate_runtime_contract
 
 
@@ -16,8 +18,10 @@ REQUIRED_FILES = [
     "README.md",
     "CASE_STUDY.md",
     "docker-compose.evidence.yml",
+    "docker-compose.lakehouse-smoke.yml",
     "docs/retail-cdc-runbook.md",
     "docs/assets/README.md",
+    "docs/data-engineering-stack.md",
     "docs/evidence/retail-cdc-evidence.md",
     "scripts/capture_clickhouse_evidence.py",
     "sql/validation/postgres_retail_seed_checks.sql",
@@ -26,6 +30,22 @@ REQUIRED_FILES = [
     "sql/examples/postgres_retail_profile.sql",
     "sql/examples/clickhouse_realtime_sales.sql",
     "sql/examples/trino_lakehouse_quality.sql",
+    "docs/lifehub.md",
+    "config/lifehub/locations.yaml",
+    "config/lifehub/scoring.yaml",
+    "catalog/lifehub/datasets.yaml",
+    "expectations/lifehub/expectations.yaml",
+    "fixtures/lifehub/open_meteo_clear_day.json",
+    "infra/lifehub/README.md",
+    "infra/airflow/dags/lifehub_daily_pipeline_dag.py",
+    "contracts/lifehub/data_contract.yaml",
+    "sql/lifehub/clickhouse_lifehub_marts.sql",
+    "sql/lifehub/lifehub_quality_checks.sql",
+    "sql/lifehub/trino_lifehub_observability.sql",
+    "scripts/lifehub_quality_check.py",
+    "scripts/emit_lifehub_lineage.py",
+    "scripts/validate_lifehub_dataops.py",
+    "scripts/validate_lifehub_contract.py",
 ]
 LINK_PATTERN = re.compile(r"\[[^\]]+\]\(([^)]+)\)")
 
@@ -121,6 +141,10 @@ def main() -> int:
     failures.extend(validate_evidence_bundle())
     failures.extend(validate_bronze_contract())
     failures.extend(validate_runtime_contract())
+    if validate_lifehub_main() != 0:
+        failures.append("LifeHub contract validation failed")
+    if validate_lifehub_dataops_main() != 0:
+        failures.append("LifeHub DataOps validation failed")
 
     if failures:
         print("Project validation failed:")

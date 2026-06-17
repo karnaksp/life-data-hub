@@ -16,6 +16,14 @@ jobs:
       - name: Validate CDC/lakehouse lab files
         run: |
           python -m py_compile scripts/capture_clickhouse_evidence.py
+          python -m py_compile scripts/capture_lifehub_evidence.py
+          python -m py_compile scripts/emit_lifehub_lineage.py
+          python -m py_compile scripts/lifehub_quality_check.py
+          python -m py_compile scripts/validate_lifehub_dataops.py
+          python -m py_compile scripts/validate_lifehub_contract.py
+          python -m py_compile infra/lifehub/lifehub/signals.py
+          python -m py_compile infra/airflow/dags/lifehub_daily_pipeline_dag.py
+          PYTHONPATH=infra/lifehub python scripts/run_lifehub_tests.py
           python scripts/validate_project.py
       - name: Validate Docker Compose config
         run: |

@@ -111,7 +111,7 @@ services:
       interval: 10s
       retries: 5
       start_period: 5s
-    profiles: [core,airflow]
+    profiles: [core,airflow,lifehub,temporal]
 
   debezium:
     build:
@@ -130,6 +130,170 @@ services:
     ports:
       - "8083:8083"
     profiles: [core]
+
+  lifehub-weather-ingest:
+    build:
+      context: ./infra/lifehub
+    command: ["python", "-m", "lifehub.cli", "weather-ingest", "--write-clickhouse"]
+    environment:
+      LIFEHUB_TIMEZONE: ${LIFEHUB_TIMEZONE:-Europe/Moscow}
+      LIFEHUB_LOCATIONS: /workspace/config/lifehub/locations.yaml
+      LIFEHUB_SCORING: /workspace/config/lifehub/scoring.yaml
+      LIFEHUB_CLICKHOUSE_URL: ${LIFEHUB_CLICKHOUSE_URL:-http://clickhouse:8123/?user=admin&password=admin}
+      LIFEHUB_WEATHER_FIXTURE: ${LIFEHUB_WEATHER_FIXTURE:-}
+    volumes:
+      - .:/workspace:ro
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+    profiles: [lifehub]
+
+  lifehub-place-sync:
+    build:
+      context: ./infra/lifehub
+    command: ["python", "-m", "lifehub.cli", "place-sync", "--source", "${LIFEHUB_PLACES_SOURCE:-auto}"]
+    environment:
+      LIFEHUB_LOCATIONS: /workspace/config/lifehub/locations.yaml
+      LIFEHUB_POSTGRES_DSN: ${LIFEHUB_POSTGRES_DSN:-host=postgres port=5432 dbname=demo user=admin password=admin}
+    volumes:
+      - .:/workspace:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    profiles: [lifehub]
+
+  lifehub-score:
+    build:
+      context: ./infra/lifehub
+    command: ["python", "-m", "lifehub.cli", "recommend", "--write-clickhouse", "--write-postgres"]
+    environment:
+      LIFEHUB_TIMEZONE: ${LIFEHUB_TIMEZONE:-Europe/Moscow}
+      LIFEHUB_LOCATIONS: /workspace/config/lifehub/locations.yaml
+      LIFEHUB_SCORING: /workspace/config/lifehub/scoring.yaml
+      LIFEHUB_PREFERENCES: /workspace/config/lifehub/preferences.yaml
+      LIFEHUB_POSTGRES_DSN: ${LIFEHUB_POSTGRES_DSN:-host=postgres port=5432 dbname=demo user=admin password=admin}
+      LIFEHUB_CLICKHOUSE_URL: ${LIFEHUB_CLICKHOUSE_URL:-http://clickhouse:8123/?user=admin&password=admin}
+      LIFEHUB_WEATHER_FIXTURE: ${LIFEHUB_WEATHER_FIXTURE:-}
+    volumes:
+      - .:/workspace:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+    profiles: [lifehub]
+
+  lifehub-signal-import:
+    build:
+      context: ./infra/lifehub
+    command: ["python", "-m", "lifehub.cli", "signal-import", "--fixture", "/workspace/fixtures/lifehub/context_signals.json", "--write-postgres", "--write-clickhouse"]
+    environment:
+      LIFEHUB_POSTGRES_DSN: ${LIFEHUB_POSTGRES_DSN:-host=postgres port=5432 dbname=demo user=admin password=admin}
+      LIFEHUB_CLICKHOUSE_URL: ${LIFEHUB_CLICKHOUSE_URL:-http://clickhouse:8123/?user=admin&password=admin}
+    volumes:
+      - .:/workspace:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+    profiles: [lifehub]
+
+  lifehub-github-signal-import:
+    build:
+      context: ./infra/lifehub
+    command: ["python", "-m", "lifehub.cli", "github-signal-import", "--fixture", "/workspace/fixtures/lifehub/github_repo_activity.json", "--write-postgres", "--write-clickhouse"]
+    environment:
+      LIFEHUB_POSTGRES_DSN: ${LIFEHUB_POSTGRES_DSN:-host=postgres port=5432 dbname=demo user=admin password=admin}
+      LIFEHUB_CLICKHOUSE_URL: ${LIFEHUB_CLICKHOUSE_URL:-http://clickhouse:8123/?user=admin&password=admin}
+      LIFEHUB_GITHUB_REPO: ${LIFEHUB_GITHUB_REPO:-karnaksp/data-forge}
+      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
+    volumes:
+      - .:/workspace:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+    profiles: [lifehub]
+
+  lifehub-market-signal-import:
+    build:
+      context: ./infra/lifehub
+    command: ["python", "-m", "lifehub.cli", "market-signal-import", "--fixture", "/workspace/fixtures/lifehub/market_snapshot.json", "--write-postgres", "--write-clickhouse"]
+    environment:
+      LIFEHUB_POSTGRES_DSN: ${LIFEHUB_POSTGRES_DSN:-host=postgres port=5432 dbname=demo user=admin password=admin}
+      LIFEHUB_CLICKHOUSE_URL: ${LIFEHUB_CLICKHOUSE_URL:-http://clickhouse:8123/?user=admin&password=admin}
+      LIFEHUB_MARKET_SYMBOLS: ${LIFEHUB_MARKET_SYMBOLS:-SPY,QQQ}
+      ALPACA_API_KEY: ${ALPACA_API_KEY:-}
+      ALPACA_API_SECRET: ${ALPACA_API_SECRET:-}
+      ALPACA_MARKET_DATA_URL: ${ALPACA_MARKET_DATA_URL:-https://data.alpaca.markets}
+    volumes:
+      - .:/workspace:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+    profiles: [lifehub]
+
+  lifehub-telegram-bot:
+    build:
+      context: ./infra/lifehub
+    command: ["python", "-m", "lifehub.cli", "telegram-poll", "--forever", "--send-daily-digest"]
+    environment:
+      LIFEHUB_TIMEZONE: ${LIFEHUB_TIMEZONE:-Europe/Moscow}
+      LIFEHUB_DIGEST_TIME: ${LIFEHUB_DIGEST_TIME:-08:00}
+      LIFEHUB_LOCATIONS: /workspace/config/lifehub/locations.yaml
+      LIFEHUB_SCORING: /workspace/config/lifehub/scoring.yaml
+      LIFEHUB_PREFERENCES: /workspace/config/lifehub/preferences.yaml
+      LIFEHUB_POSTGRES_DSN: ${LIFEHUB_POSTGRES_DSN:-host=postgres port=5432 dbname=demo user=admin password=admin}
+      LIFEHUB_CLICKHOUSE_URL: ${LIFEHUB_CLICKHOUSE_URL:-http://clickhouse:8123/?user=admin&password=admin}
+      LIFEHUB_WEATHER_FIXTURE: ${LIFEHUB_WEATHER_FIXTURE:-}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID:-}
+    volumes:
+      - .:/workspace:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+    profiles: [lifehub]
+
+  temporal:
+    image: temporalio/temporal:latest
+    command: ["server", "start-dev", "--ip", "0.0.0.0"]
+    ports:
+      - "7233:7233"
+      - "8233:8233"
+    profiles: [temporal]
+
+  lifehub-temporal-worker:
+    build:
+      context: ./infra/lifehub
+    command: ["python", "-m", "lifehub.temporal.worker"]
+    environment:
+      LIFEHUB_TIMEZONE: ${LIFEHUB_TIMEZONE:-Europe/Moscow}
+      LIFEHUB_LOCATIONS: /workspace/config/lifehub/locations.yaml
+      LIFEHUB_SCORING: /workspace/config/lifehub/scoring.yaml
+      LIFEHUB_PREFERENCES: /workspace/config/lifehub/preferences.yaml
+      LIFEHUB_POSTGRES_DSN: ${LIFEHUB_POSTGRES_DSN:-host=postgres port=5432 dbname=demo user=admin password=admin}
+      LIFEHUB_CLICKHOUSE_URL: ${LIFEHUB_CLICKHOUSE_URL:-http://clickhouse:8123/?user=admin&password=admin}
+      LIFEHUB_WEATHER_FIXTURE: ${LIFEHUB_WEATHER_FIXTURE:-}
+      LIFEHUB_TEMPORAL_ADDRESS: ${LIFEHUB_TEMPORAL_ADDRESS:-temporal:7233}
+      LIFEHUB_TEMPORAL_NAMESPACE: ${LIFEHUB_TEMPORAL_NAMESPACE:-default}
+      LIFEHUB_TEMPORAL_TASK_QUEUE: ${LIFEHUB_TEMPORAL_TASK_QUEUE:-lifehub-daily-decision}
+    volumes:
+      - .:/workspace:ro
+    depends_on:
+      temporal:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+    profiles: [temporal]
 
   kafka:
     build:
@@ -355,7 +519,7 @@ services:
       timeout: 10s
       retries: 5
       start_period: 30s
-    profiles: [core]
+    profiles: [core,lifehub,temporal]
 
 
 

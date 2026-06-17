@@ -1,0 +1,116 @@
+version: 1
+suite: lifehub_core_quality
+
+expectations:
+  - id: spots_have_rows
+    dataset: postgres.public.life_spots
+    type: row_count
+    operator: gt
+    threshold: 0
+    severity: error
+
+  - id: spots_have_valid_coordinates
+    dataset: postgres.public.life_spots
+    type: sql
+    query: |
+      SELECT count(*)
+      FROM life_spots
+      WHERE latitude NOT BETWEEN -90 AND 90
+         OR longitude NOT BETWEEN -180 AND 180
+    expected: 0
+    severity: error
+
+  - id: diary_scores_in_range
+    dataset: postgres.public.life_activity_log
+    type: sql
+    query: |
+      SELECT count(*)
+      FROM life_activity_log
+      WHERE intensity NOT BETWEEN 1 AND 10
+         OR mood NOT BETWEEN 1 AND 10
+         OR fatigue NOT BETWEEN 1 AND 10
+    expected: 0
+    severity: error
+
+  - id: weather_has_recent_fetch
+    dataset: clickhouse.analytics.life_weather_hourly
+    type: freshness
+    timestamp_column: fetched_at
+    max_age_minutes: 360
+    severity: warning
+
+  - id: weather_values_are_reasonable
+    dataset: clickhouse.analytics.life_weather_hourly
+    type: sql
+    query: |
+      SELECT count()
+      FROM analytics.life_weather_hourly
+      WHERE temperature_c NOT BETWEEN -60 AND 45
+         OR precipitation_mm < 0
+         OR wind_speed_kmh < 0
+         OR wind_gust_kmh < 0
+    expected: 0
+    severity: error
+
+  - id: readiness_scores_are_valid
+    dataset: clickhouse.analytics.life_readiness_scores
+    type: sql
+    query: |
+      SELECT count()
+      FROM analytics.life_readiness_scores
+      WHERE score NOT BETWEEN 0 AND 100
+         OR decision NOT IN ('go', 'caution', 'skip')
+         OR explanation = ''
+    expected: 0
+    severity: error
+
+  - id: readiness_has_recent_compute
+    dataset: clickhouse.analytics.life_readiness_scores
+    type: freshness
+    timestamp_column: computed_at
+    max_age_minutes: 360
+    severity: warning
+
+  - id: recommendations_are_valid
+    dataset: clickhouse.analytics.life_recommendation_events
+    type: sql
+    query: |
+      SELECT count()
+      FROM analytics.life_recommendation_events
+      WHERE score NOT BETWEEN 0 AND 100
+         OR decision NOT IN ('go', 'caution', 'recover')
+         OR reasons = ''
+    expected: 0
+    severity: error
+
+  - id: recommendations_have_recent_compute
+    dataset: clickhouse.analytics.life_recommendation_events
+    type: freshness
+    timestamp_column: generated_at
+    max_age_minutes: 360
+    severity: warning
+
+  - id: feedback_actions_are_valid
+    dataset: clickhouse.analytics.life_decision_feedback_events
+    type: sql
+    query: |
+      SELECT count()
+      FROM analytics.life_decision_feedback_events
+      WHERE action NOT IN ('followed', 'skipped', 'changed')
+         OR (result IS NOT NULL AND result NOT IN ('good', 'ok', 'bad', 'skipped'))
+    expected: 0
+    severity: error
+
+  - id: context_signals_are_valid
+    dataset: clickhouse.analytics.life_signal_events
+    type: sql
+    query: |
+      SELECT count()
+      FROM analytics.life_signal_events
+      WHERE domain NOT IN ('market', 'github', 'career', 'wellbeing', 'system')
+         OR direction NOT IN ('positive', 'negative', 'neutral')
+         OR urgency NOT BETWEEN 1 AND 10
+         OR confidence NOT BETWEEN 1 AND 100
+         OR title = ''
+    expected: 0
+    severity: error

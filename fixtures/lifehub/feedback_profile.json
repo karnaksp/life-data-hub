@@ -1,0 +1,20 @@
+{
+  "skate": {
+    "activity": "skate",
+    "feedback_events": 4,
+    "followed_events": 3,
+    "skipped_events": 1,
+    "good_results": 2,
+    "bad_results": 0,
+    "follow_rate": 0.75
+  },
+  "moto_lesson": {
+    "activity": "moto_lesson",
+    "feedback_events": 3,
+    "followed_events": 2,
+    "skipped_events": 1,
+    "good_results": 1,
+    "bad_results": 0,
+    "follow_rate": 0.667
+  }
+}

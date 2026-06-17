@@ -1,0 +1,71 @@
+locations:
+  - id: spb_center
+    label: Saint Petersburg center
+    latitude: 59.9386
+    longitude: 30.3141
+    tags: [city, default, weather]
+  - id: spb_sevkabel_port
+    label: Sevkabel Port waterfront
+    latitude: 59.923719
+    longitude: 30.242729
+    tags: [skate, walk, waterfront, outdoor, public]
+  - id: spb_new_holland
+    label: New Holland island
+    latitude: 59.929616
+    longitude: 30.289735
+    tags: [skate, walk, city, outdoor, public]
+  - id: spb_park_300
+    label: Park 300 letiya
+    latitude: 59.984723
+    longitude: 30.200052
+    tags: [skate, walk, waterfront, wind_sensitive, outdoor, public]
+  - id: spb_primorsky_victory_park
+    label: Primorsky Victory Park
+    latitude: 59.971780
+    longitude: 30.244775
+    tags: [volleyball, skate, walk, outdoor, public]
+  - id: spb_krestovsky_island
+    label: Krestovsky island
+    latitude: 59.971935
+    longitude: 30.246255
+    tags: [volleyball, walk, recovery, outdoor, public]
+  - id: spb_pulkovo_heights
+    label: Pulkovo Heights road practice area
+    latitude: 59.771865
+    longitude: 30.326112
+    tags: [moto_lesson, moto_practice, wind_sensitive, outdoor, public]
+  - id: spb_pushkin_day_ride
+    label: Pushkin day ride area
+    latitude: 59.687838
+    longitude: 30.340714
+    tags: [moto_practice, walk, day_ride, outdoor, public]
+  - id: spb_sestroretsk_razliv
+    label: Sestroretsky Razliv
+    latitude: 60.100744
+    longitude: 30.052961
+    tags: [moto_practice, walk, waterfront, wind_sensitive, outdoor, public]
+  - id: spb_toksovo
+    label: Toksovo outdoor area
+    latitude: 60.158878
+    longitude: 30.525583
+    tags: [snowboard, walk, day_ride, outdoor, public]
+  - id: spb_okhta_park
+    label: Okhta Park
+    latitude: 60.127130
+    longitude: 30.463294
+    tags: [snowboard, walk, outdoor, public]
+  - id: spb_igora_resort
+    label: Igora resort
+    latitude: 60.514860
+    longitude: 30.216432
+    tags: [snowboard, day_ride, outdoor, public]
+  - id: spb_krasnoe_ozero
+    label: Krasnoe Ozero resort
+    latitude: 60.535543
+    longitude: 29.744633
+    tags: [snowboard, day_ride, outdoor, public]
+  - id: spb_snezhny_resort
+    label: Snezhny resort slopes
+    latitude: 60.526650
+    longitude: 29.771853
+    tags: [snowboard, day_ride, outdoor, public]

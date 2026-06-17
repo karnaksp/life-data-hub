@@ -1,0 +1,43 @@
+version: 2
+
+sources:
+  - name: clickhouse_lifehub
+    database: clickhouse
+    schema: analytics
+    tables:
+      - name: life_weather_hourly
+        loaded_at_field: fetched_at
+        freshness:
+          warn_after: {count: 6, period: hour}
+          error_after: {count: 24, period: hour}
+      - name: life_readiness_scores
+        loaded_at_field: computed_at
+        freshness:
+          warn_after: {count: 6, period: hour}
+          error_after: {count: 24, period: hour}
+      - name: life_activity_events
+        loaded_at_field: logged_at
+      - name: life_recommendation_events
+        loaded_at_field: generated_at
+      - name: life_decision_feedback_events
+        loaded_at_field: created_at
+      - name: life_signal_events
+        loaded_at_field: ingested_at
+      - name: life_daily_context_profiles
+        loaded_at_field: generated_at
+
+  - name: postgres_lifehub
+    database: pg_demo_retail
+    schema: public
+    tables:
+      - name: life_spots
+      - name: life_activity_log
+        loaded_at_field: logged_at
+      - name: life_recommendation_events
+        loaded_at_field: generated_at
+      - name: life_decision_feedback
+        loaded_at_field: created_at
+      - name: life_signal_events
+        loaded_at_field: ingested_at
+      - name: life_daily_context_profiles
+        loaded_at_field: generated_at

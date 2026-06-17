@@ -1,0 +1,12 @@
+lifehub:
+  target: local_trino
+  outputs:
+    local_trino:
+      type: trino
+      method: none
+      host: localhost
+      port: 8080
+      user: dbt
+      catalog: clickhouse
+      schema: analytics
+      threads: 2

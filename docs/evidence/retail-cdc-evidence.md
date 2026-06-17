@@ -49,6 +49,14 @@ The local Postgres bootstrap creates the following source tables. Debezium strea
 
 - `customer_segments`
 - `inventory`
+- `life_activity_log`
+- `life_daily_context_profiles`
+- `life_decision_feedback`
+- `life_digest_runs`
+- `life_recommendation_events`
+- `life_signal_events`
+- `life_spots`
+- `life_user_preferences`
 - `product_suppliers`
 - `products`
 - `suppliers`

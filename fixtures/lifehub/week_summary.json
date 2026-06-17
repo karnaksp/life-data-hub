@@ -1,0 +1,35 @@
+{
+  "sessions": 5,
+  "avg_intensity": 6.4,
+  "avg_mood": 7.2,
+  "avg_fatigue": 4.8,
+  "pain_sessions": 0,
+  "by_activity": [
+    {
+      "activity_type": "skate",
+      "sessions": 2
+    },
+    {
+      "activity_type": "walk",
+      "sessions": 1
+    },
+    {
+      "activity_type": "gym",
+      "sessions": 1
+    },
+    {
+      "activity_type": "moto_lesson",
+      "sessions": 1
+    }
+  ],
+  "by_result": [
+    {
+      "result": "good",
+      "sessions": 3
+    },
+    {
+      "result": "ok",
+      "sessions": 2
+    }
+  ]
+}

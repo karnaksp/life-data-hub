@@ -1,0 +1,636 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LifeHub Cockpit</title>
+  <style>
+    :root {
+      --bg: #f6f7f4;
+      --panel: #ffffff;
+      --text: #18211d;
+      --muted: #667067;
+      --line: #dfe4dd;
+      --green: #2f7d5a;
+      --blue: #376f96;
+      --red: #a94b4b;
+      --amber: #a66f2b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.45;
+    }
+    main { max-width: 1180px; margin: 0 auto; padding: 28px 18px 42px; }
+    header { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; align-items: end; margin-bottom: 22px; }
+    h1 { margin: 0; font-size: clamp(28px, 4vw, 46px); letter-spacing: 0; }
+    .subtitle { margin: 8px 0 0; color: var(--muted); max-width: 760px; }
+    .stamp { text-align: right; color: var(--muted); font-size: 13px; }
+    .grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; margin-bottom: 18px; }
+    .kpi, .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: 0 1px 2px rgba(24, 33, 29, 0.04);
+    }
+    .kpi { padding: 14px; min-height: 118px; display: flex; flex-direction: column; justify-content: space-between; }
+    .kpi span, .kpi em, caption { color: var(--muted); font-style: normal; font-size: 13px; }
+    .kpi strong { display: block; font-size: 28px; letter-spacing: 0; overflow-wrap: anywhere; }
+    .layout { display: grid; grid-template-columns: 1.35fr 0.85fr; gap: 14px; }
+    .panel { padding: 16px; min-width: 0; }
+    .panel h2 { margin: 0 0 12px; font-size: 18px; letter-spacing: 0; }
+    .hero-action { display: flex; gap: 12px; align-items: center; margin: 10px 0 2px; }
+    .hero-action strong { font-size: 34px; }
+    .score-ring {
+      width: 74px;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: conic-gradient(var(--green) 100%, #e6ebe6 0);
+      font-weight: 800;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; table-layout: fixed; }
+    th { text-align: left; color: var(--muted); font-weight: 600; border-bottom: 1px solid var(--line); padding: 8px 6px; }
+    td { border-bottom: 1px solid var(--line); padding: 9px 6px; vertical-align: middle; overflow-wrap: anywhere; }
+    td span { display: block; color: var(--muted); font-size: 12px; }
+    .num { text-align: right; font-variant-numeric: tabular-nums; }
+    .bar { height: 9px; background: #e7ece8; border-radius: 99px; overflow: hidden; min-width: 90px; }
+    .bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--blue), var(--green)); }
+    .pill { display: inline-block; padding: 3px 8px; border-radius: 999px; background: #eef1ef; color: var(--text); font-size: 12px; }
+    .pill.go, .pill.positive { background: #e3f1e9; color: var(--green); }
+    .pill.caution, .pill.neutral { background: #f3ead9; color: var(--amber); }
+    .pill.recover, .pill.skip, .pill.negative { background: #f5e3e1; color: var(--red); }
+    .hbar { display: grid; grid-template-columns: minmax(120px, 180px) 1fr 42px; gap: 10px; align-items: center; margin: 10px 0; }
+    .hbar span { color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
+    .hbar b { height: 12px; background: var(--blue); border-radius: 999px; display: block; }
+    .hbar em { color: var(--muted); font-style: normal; font-variant-numeric: tabular-nums; text-align: right; }
+    .empty { color: var(--muted); }
+    .stack { display: grid; gap: 14px; }
+    .review-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+    .review-list li { display: grid; grid-template-columns: 110px 1fr; gap: 10px; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
+    .review-list li:last-child { border-bottom: 0; padding-bottom: 0; }
+    .review-list span { color: var(--muted); font-size: 13px; }
+    .review-list strong { font-size: 14px; overflow-wrap: anywhere; }
+    @media (max-width: 920px) {
+      header, .layout { grid-template-columns: 1fr; }
+      .stamp { text-align: left; }
+      .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 560px) {
+      main { padding-inline: 12px; }
+      .grid { grid-template-columns: 1fr; }
+      .hero-action strong { font-size: 28px; }
+      table { font-size: 13px; }
+      th.hide-sm, td.hide-sm { display: none; }
+      .bar { min-width: 0; }
+      .hbar { grid-template-columns: 1fr; gap: 4px; }
+      .hbar em { text-align: left; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>LifeHub Cockpit</h1>
+        <p class="subtitle">Local decision intelligence for Saint Petersburg: readiness, recommendations, feedback and context signals without exposing raw personal diary data.</p>
+      </div>
+      <div class="stamp">Generated 2026-06-15T22:14:31.087061+00:00<br>Source: local ClickHouse marts</div>
+    </header>
+    <section class="grid">
+        <section class="kpi">
+          <span>Best action</span>
+          <strong>skate</strong>
+          <em>100 / 100</em>
+        </section>
+        
+
+        <section class="kpi">
+          <span>Useful decision days</span>
+          <strong>1</strong>
+          <em>this week</em>
+        </section>
+        
+
+        <section class="kpi">
+          <span>Follow rate</span>
+          <strong>57%</strong>
+          <em>feedback based</em>
+        </section>
+        
+
+        <section class="kpi">
+          <span>Recommendations</span>
+          <strong>68</strong>
+          <em>stored events</em>
+        </section>
+        
+
+        <section class="kpi">
+          <span>Context signals</span>
+          <strong>3</strong>
+          <em>market, GitHub, system</em>
+        </section>
+        
+
+        <section class="kpi">
+          <span>Weekly goals</span>
+          <strong>2/5</strong>
+          <em>targets covered</em>
+        </section>
+        </section>
+    <section class="layout">
+      <div class="stack">
+        <section class="panel">
+          <h2>Today Decision</h2>
+          <div class="hero-action">
+            <div class="score-ring">100</div>
+            <div>
+              <strong>moto_lesson</strong>
+              <p class="subtitle">conditions look usable</p>
+            </div>
+          </div>
+        </section>
+        <section class="panel">
+          <h2>Readiness By Activity</h2>
+          <table>
+            <thead><tr><th>Activity</th><th>Score</th><th class="num">Value</th><th>Decision</th><th class="hide-sm">Reason</th></tr></thead>
+            <tbody>
+            <tr>
+              <td><strong>moto_lesson</strong><span>spb_center</span></td>
+              <td><div class="bar"><i style="width:100%"></i></div></td>
+              <td class="num">100</td>
+              <td><span class="pill go">go</span></td>
+              <td class="hide-sm">conditions look usable</td>
+            </tr>
+            
+
+            <tr>
+              <td><strong>moto_lesson</strong><span>spb_igora_resort</span></td>
+              <td><div class="bar"><i style="width:100%"></i></div></td>
+              <td class="num">100</td>
+              <td><span class="pill go">go</span></td>
+              <td class="hide-sm">conditions look usable</td>
+            </tr>
+            
+
+            <tr>
+              <td><strong>moto_lesson</strong><span>spb_krasnoe_ozero</span></td>
+              <td><div class="bar"><i style="width:100%"></i></div></td>
+              <td class="num">100</td>
+              <td><span class="pill go">go</span></td>
+              <td class="hide-sm">conditions look usable</td>
+            </tr>
+            
+
+            <tr>
+              <td><strong>moto_lesson</strong><span>spb_krestovsky_island</span></td>
+              <td><div class="bar"><i style="width:100%"></i></div></td>
+              <td class="num">100</td>
+              <td><span class="pill go">go</span></td>
+              <td class="hide-sm">conditions look usable</td>
+            </tr>
+            
+
+            <tr>
+              <td><strong>moto_lesson</strong><span>spb_new_holland</span></td>
+              <td><div class="bar"><i style="width:100%"></i></div></td>
+              <td class="num">100</td>
+              <td><span class="pill go">go</span></td>
+              <td class="hide-sm">conditions look usable</td>
+            </tr>
+            
+
+            <tr>
+              <td><strong>moto_lesson</strong><span>spb_okhta_park</span></td>
+              <td><div class="bar"><i style="width:100%"></i></div></td>
+              <td class="num">100</td>
+              <td><span class="pill go">go</span></td>
+              <td class="hide-sm">conditions look usable</td>
+            </tr>
+            
+
+            <tr>
+              <td><strong>moto_lesson</strong><span>spb_park_300</span></td>
+              <td><div class="bar"><i style="width:100%"></i></div></td>
+              <td class="num">100</td>
+              <td><span class="pill go">go</span></td>
+              <td class="hide-sm">conditions look usable</td>
+            </tr>
+            
+
+            <tr>
+              <td><strong>moto_lesson</strong><span>spb_primorsky_victory_park</span></td>
+              <td><div class="bar"><i style="width:100%"></i></div></td>
+              <td class="num">100</td>
+              <td><span class="pill go">go</span></td>
+              <td class="hide-sm">conditions look usable</td>
+            </tr>
+            
+
+            <tr>
+              <td><strong>moto_lesson</strong><span>spb_pulkovo_heights</span></td>
+              <td><div class="bar"><i style="width:100%"></i></div></td>
+              <td class="num">100</td>
+              <td><span class="pill go">go</span></td>
+              <td class="hide-sm">conditions look usable</td>
+            </tr>
+            
+
+            <tr>
+              <td><strong>moto_lesson</strong><span>spb_pushkin_day_ride</span></td>
+              <td><div class="bar"><i style="width:100%"></i></div></td>
+              <td class="num">100</td>
+              <td><span class="pill go">go</span></td>
+              <td class="hide-sm">conditions look usable</td>
+            </tr>
+            
+
+            <tr>
+              <td><strong>moto_lesson</strong><span>spb_sestroretsk_razliv</span></td>
+              <td><div class="bar"><i style="width:100%"></i></div></td>
+              <td class="num">100</td>
+              <td><span class="pill go">go</span></td>
+              <td class="hide-sm">conditions look usable</td>
+            </tr>
+            
+
+            <tr>
+              <td><strong>moto_lesson</strong><span>spb_sevkabel_port</span></td>
+              <td><div class="bar"><i style="width:100%"></i></div></td>
+              <td class="num">100</td>
+              <td><span class="pill go">go</span></td>
+              <td class="hide-sm">conditions look usable</td>
+            </tr>
+            
+
+            <tr>
+              <td><strong>moto_lesson</strong><span>spb_skate_public</span></td>
+              <td><div class="bar"><i style="width:100%"></i></div></td>
+              <td class="num">100</td>
+              <td><span class="pill go">go</span></td>
+              <td class="hide-sm">conditions look usable</td>
+            </tr>
+            
+
+            <tr>
+              <td><strong>moto_lesson</strong><span>spb_snezhny_resort</span></td>
+              <td><div class="bar"><i style="width:100%"></i></div></td>
+              <td class="num">100</td>
+              <td><span class="pill go">go</span></td>
+              <td class="hide-sm">conditions look usable</td>
+            </tr>
+            
+
+            <tr>
+              <td><strong>moto_lesson</strong><span>spb_snow_public</span></td>
+              <td><div class="bar"><i style="width:100%"></i></div></td>
+              <td class="num">100</td>
+              <td><span class="pill go">go</span></td>
+              <td class="hide-sm">conditions look usable</td>
+            </tr>
+            
+
+            <tr>
+              <td><strong>moto_lesson</strong><span>spb_sports_public</span></td>
+              <td><div class="bar"><i style="width:100%"></i></div></td>
+              <td class="num">100</td>
+              <td><span class="pill go">go</span></td>
+              <td class="hide-sm">conditions look usable</td>
+            </tr>
+            
+
+            <tr>
+              <td><strong>moto_lesson</strong><span>spb_toksovo</span></td>
+              <td><div class="bar"><i style="width:100%"></i></div></td>
+              <td class="num">100</td>
+              <td><span class="pill go">go</span></td>
+              <td class="hide-sm">conditions look usable</td>
+            </tr>
+            
+
+            <tr>
+              <td><strong>skate</strong><span>spb_center</span></td>
+              <td><div class="bar"><i style="width:100%"></i></div></td>
+              <td class="num">100</td>
+              <td><span class="pill go">go</span></td>
+              <td class="hide-sm">conditions look usable</td>
+            </tr>
+            
+
+            <tr>
+              <td><strong>skate</strong><span>spb_igora_resort</span></td>
+              <td><div class="bar"><i style="width:100%"></i></div></td>
+              <td class="num">100</td>
+              <td><span class="pill go">go</span></td>
+              <td class="hide-sm">conditions look usable</td>
+            </tr>
+            
+
+            <tr>
+              <td><strong>skate</strong><span>spb_krasnoe_ozero</span></td>
+              <td><div class="bar"><i style="width:100%"></i></div></td>
+              <td class="num">100</td>
+              <td><span class="pill go">go</span></td>
+              <td class="hide-sm">conditions look usable</td>
+            </tr>
+            </tbody>
+          </table>
+        </section>
+        <section class="panel">
+          <h2>Recommendation Score Trend</h2>
+          <div class="hbar"><span>2026-06-15 · moto_lesson</span><b style="width:97%"></b><em>97</em></div>
+<div class="hbar"><span>2026-06-15 · skate</span><b style="width:100%"></b><em>100</em></div>
+<div class="hbar"><span>2026-06-15 · snowboard</span><b style="width:8%"></b><em>8</em></div>
+<div class="hbar"><span>2026-06-15 · volleyball</span><b style="width:87%"></b><em>87</em></div>
+        </section>
+      </div>
+      <div class="stack">
+        <section class="panel">
+          <h2>Daily Context Profile</h2>
+          
+      <ul class="review-list">
+        <li><span>Date</span><strong>2026-06-15 · Europe/Moscow</strong></li>
+        <li><span>State</span><strong>act_on_open_goal</strong></li>
+        <li><span>Top action</span><strong>skate · 100 / 100 · go</strong></li>
+        <li><span>7d loop</span><strong>12 sessions · fatigue 4.5 · mood 7.5</strong></li>
+        <li><span>Quality</span><strong>1 useful days · follow 57% · open goals 3</strong></li>
+        <li><span>Signals</span><strong>3 active · market urgency 7</strong></li>
+        <li><span>Summary</span><strong>skate is top action at 100/100 (go); state=act_on_open_goal; sessions_7d=12; fatigue=4.5; useful_days=1; open_goals=3; top_signal=market:7</strong></li>
+      </ul>
+    
+        </section>
+        <section class="panel">
+          <h2>Weekly Review</h2>
+          
+      <ul class="review-list">
+        <li><span>Open goals</span><strong>volleyball 0/1, gym 0/1, walk 0/2</strong></li>
+        <li><span>Covered</span><strong>skate, moto_lesson</strong></li>
+        <li><span>Learning</span><strong>skate follow rate 100%</strong></li>
+        <li><span>Context watch</span><strong>market urgency 9</strong></li>
+        <li><span>Next focus</span><strong>Close volleyball first when readiness allows.</strong></li>
+      </ul>
+    
+        </section>
+        <section class="panel">
+          <h2>Weekly Goal Progress</h2>
+          <table>
+            <thead><tr><th>Activity</th><th>Progress</th><th class="num">Done</th><th class="num">Target</th></tr></thead>
+            <tbody>
+            <tr>
+              <td><strong>skate</strong></td>
+              <td><div class="bar"><i style="width:100%"></i></div></td>
+              <td class="num">6</td>
+              <td class="num">2</td>
+            </tr>
+            
+
+            <tr>
+              <td><strong>volleyball</strong></td>
+              <td><div class="bar"><i style="width:0%"></i></div></td>
+              <td class="num">0</td>
+              <td class="num">1</td>
+            </tr>
+            
+
+            <tr>
+              <td><strong>moto_lesson</strong></td>
+              <td><div class="bar"><i style="width:100%"></i></div></td>
+              <td class="num">6</td>
+              <td class="num">1</td>
+            </tr>
+            
+
+            <tr>
+              <td><strong>gym</strong></td>
+              <td><div class="bar"><i style="width:0%"></i></div></td>
+              <td class="num">0</td>
+              <td class="num">1</td>
+            </tr>
+            
+
+            <tr>
+              <td><strong>walk</strong></td>
+              <td><div class="bar"><i style="width:0%"></i></div></td>
+              <td class="num">0</td>
+              <td class="num">2</td>
+            </tr>
+            </tbody>
+          </table>
+        </section>
+        <section class="panel">
+          <h2>Activity Learning Profile</h2>
+          <table>
+            <thead><tr><th>Activity</th><th class="num">Events</th><th class="num">Follow</th><th class="num">Good</th><th class="num">Bad</th></tr></thead>
+            <tbody>
+            <tr>
+              <td><strong>skate</strong><span>2026-06-15 22:13:29.000</span></td>
+              <td class="num">8</td>
+              <td class="num">100%</td>
+              <td class="num">8</td>
+              <td class="num">0</td>
+            </tr>
+            
+
+            <tr>
+              <td><strong>snowboard</strong><span>2026-06-15 22:13:38.000</span></td>
+              <td class="num">6</td>
+              <td class="num">0%</td>
+              <td class="num">0</td>
+              <td class="num">0</td>
+            </tr>
+            </tbody>
+          </table>
+        </section>
+        <section class="panel">
+          <h2>Context Signals</h2>
+          <table>
+            <thead><tr><th>Date</th><th>Domain</th><th>Direction</th><th class="num">Urgency</th><th class="num">Conf.</th></tr></thead>
+            <tbody>
+            <tr>
+              <td>2026-06-16</td>
+              <td><strong>market</strong><span>fixture</span></td>
+              <td><span class="pill negative">negative</span></td>
+              <td class="num">9</td>
+              <td class="num">70.00</td>
+            </tr>
+            
+
+            <tr>
+              <td>2026-06-16</td>
+              <td><strong>github</strong><span>github_api</span></td>
+              <td><span class="pill positive">positive</span></td>
+              <td class="num">5</td>
+              <td class="num">75.00</td>
+            </tr>
+            
+
+            <tr>
+              <td>2026-06-16</td>
+              <td><strong>market</strong><span>fixture</span></td>
+              <td><span class="pill positive">positive</span></td>
+              <td class="num">5</td>
+              <td class="num">70.00</td>
+            </tr>
+            
+
+            <tr>
+              <td>2026-06-15</td>
+              <td><strong>market</strong><span>fixture</span></td>
+              <td><span class="pill negative">negative</span></td>
+              <td class="num">7</td>
+              <td class="num">70.00</td>
+            </tr>
+            
+
+            <tr>
+              <td>2026-06-15</td>
+              <td><strong>github</strong><span>fixture</span></td>
+              <td><span class="pill positive">positive</span></td>
+              <td class="num">5</td>
+              <td class="num">80.00</td>
+            </tr>
+            
+
+            <tr>
+              <td>2026-06-15</td>
+              <td><strong>system</strong><span>fixture</span></td>
+              <td><span class="pill neutral">neutral</span></td>
+              <td class="num">4</td>
+              <td class="num">60.00</td>
+            </tr>
+            
+
+            <tr>
+              <td>2026-06-14</td>
+              <td><strong>github</strong><span>github_api</span></td>
+              <td><span class="pill negative">negative</span></td>
+              <td class="num">6</td>
+              <td class="num">75.00</td>
+            </tr>
+            </tbody>
+          </table>
+        </section>
+        <section class="panel">
+          <h2>Weather Aggregates</h2>
+          <table>
+            <thead><tr><th>Location</th><th class="num">Temp</th><th class="num">Rain</th><th class="num">Snow</th><th class="num">Gust</th></tr></thead>
+            <tbody>
+            <tr>
+              <td><strong>spb_center</strong><span>2026-06-17</span></td>
+              <td class="num">14.4</td>
+              <td class="num">39.0</td>
+              <td class="num">0.0</td>
+              <td class="num">47.5</td>
+            </tr>
+            
+
+            <tr>
+              <td><strong>spb_igora_resort</strong><span>2026-06-17</span></td>
+              <td class="num">13.7</td>
+              <td class="num">45.0</td>
+              <td class="num">0.0</td>
+              <td class="num">47.5</td>
+            </tr>
+            
+
+            <tr>
+              <td><strong>spb_krasnoe_ozero</strong><span>2026-06-17</span></td>
+              <td class="num">14.3</td>
+              <td class="num">49.4</td>
+              <td class="num">0.0</td>
+              <td class="num">43.9</td>
+            </tr>
+            
+
+            <tr>
+              <td><strong>spb_krestovsky_island</strong><span>2026-06-17</span></td>
+              <td class="num">13.7</td>
+              <td class="num">38.3</td>
+              <td class="num">0.0</td>
+              <td class="num">47.5</td>
+            </tr>
+            
+
+            <tr>
+              <td><strong>spb_new_holland</strong><span>2026-06-17</span></td>
+              <td class="num">14.3</td>
+              <td class="num">38.4</td>
+              <td class="num">0.0</td>
+              <td class="num">46.1</td>
+            </tr>
+            
+
+            <tr>
+              <td><strong>spb_okhta_park</strong><span>2026-06-17</span></td>
+              <td class="num">14.0</td>
+              <td class="num">34.0</td>
+              <td class="num">0.0</td>
+              <td class="num">52.2</td>
+            </tr>
+            
+
+            <tr>
+              <td><strong>spb_park_300</strong><span>2026-06-17</span></td>
+              <td class="num">13.4</td>
+              <td class="num">39.1</td>
+              <td class="num">0.0</td>
+              <td class="num">45.7</td>
+            </tr>
+            
+
+            <tr>
+              <td><strong>spb_primorsky_victory_park</strong><span>2026-06-17</span></td>
+              <td class="num">13.7</td>
+              <td class="num">38.3</td>
+              <td class="num">0.0</td>
+              <td class="num">47.5</td>
+            </tr>
+            
+
+            <tr>
+              <td><strong>spb_pulkovo_heights</strong><span>2026-06-17</span></td>
+              <td class="num">13.6</td>
+              <td class="num">27.8</td>
+              <td class="num">0.0</td>
+              <td class="num">38.2</td>
+            </tr>
+            
+
+            <tr>
+              <td><strong>spb_pushkin_day_ride</strong><span>2026-06-17</span></td>
+              <td class="num">13.6</td>
+              <td class="num">27.4</td>
+              <td class="num">0.0</td>
+              <td class="num">39.6</td>
+            </tr>
+            
+
+            <tr>
+              <td><strong>spb_sestroretsk_razliv</strong><span>2026-06-17</span></td>
+              <td class="num">14.4</td>
+              <td class="num">43.4</td>
+              <td class="num">0.0</td>
+              <td class="num">63.0</td>
+            </tr>
+            
+
+            <tr>
+              <td><strong>spb_sevkabel_port</strong><span>2026-06-17</span></td>
+              <td class="num">13.4</td>
+              <td class="num">36.7</td>
+              <td class="num">0.0</td>
+              <td class="num">42.5</td>
+            </tr>
+            </tbody>
+          </table>
+        </section>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

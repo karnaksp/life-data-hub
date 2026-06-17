@@ -43,6 +43,18 @@ Data Forge включает полный современный data stack на 
 ### 🏭 Data Generation
 - **Data Generator** → реалистичный retail data producer для Kafka topics и Postgres tables (см. [infra/data-generator/README.md](infra/data-generator/README.md))
 
+### 🧭 Personal Data Product
+- **LifeHub** → local-only personal decision engine для Санкт-Петербурга: Open-Meteo weather, public outdoor spots, Telegram diary, diary-aware recommendations, weekly coach summary и outdoor readiness scoring (см. [docs/lifehub.md](docs/lifehub.md))
+
+### ✅ Data Engineering Controls
+- **Contracts** → data contract для LifeHub и Avro contracts для streaming topics
+- **Catalog & Expectations** → dataset inventory, privacy classification, freshness SLOs, expectation suites
+- **Quality gates** → static validation, SQL checks, freshness checks, runtime DQ для Postgres/ClickHouse
+- **Analytics Engineering** → dbt-compatible staging/mart models поверх Trino/ClickHouse/Postgres
+- **Lineage** → OpenLineage-compatible event для LifeHub pipeline
+- **Evidence** → redacted evidence bundles для reviewer-friendly проверки
+- **Marts** → ClickHouse views и Trino observability SQL для прикладной аналитики
+
 ---
 
 ## 🚀 Быстрый старт
@@ -88,6 +100,9 @@ docker compose --profile explore up -d
 
 # Add realistic data generation
 docker compose --profile datagen up -d
+
+# Add local-only LifeHub sports/wellbeing digest
+docker compose --profile lifehub up -d
 ```
 
 ### 4. Открыть сервисы
@@ -105,6 +120,10 @@ docker compose --profile datagen up -d
 ## 🧩 Architecture profiles
 
 Подробности по профилям и командам — в [docs/architecture.md](docs/architecture.md).
+
+## 🧱 Data Engineering stack map
+
+Как стек покрывает ingestion, orchestration, contracts, quality, serving, evidence и exploration: [docs/data-engineering-stack.md](docs/data-engineering-stack.md).
 
 ## 🧪 Applied CDC/lakehouse lab
 
@@ -133,6 +152,21 @@ Applied scenario: **retail CDC to lakehouse and realtime analytics**.
 
 ---
 
+## 🧭 LifeHub sports/wellbeing digest
+
+LifeHub добавляет отдельный local-only домен поверх Data Forge: погода СПб, публичные outdoor spots, подробный Telegram-дневник тренировок, diary-aware recommendations и readiness score для skate/snowboard/moto/volleyball. Быстрый fixture smoke без токенов:
+
+```bash
+make lifehub-demo
+make lifehub-up-local
+make lifehub-quality
+make lifehub-evidence
+```
+
+Подробности: [docs/lifehub.md](docs/lifehub.md).
+
+---
+
 ## 🛠️ Разработка
 
 Project layout, env vars и советы по изменениям — в [docs/development.md](docs/development.md).
@@ -143,6 +177,7 @@ Local quality checks:
 python scripts/validate_project.py
 docker compose --env-file .env.example config --quiet
 docker compose --env-file .env.example -f docker-compose.yml -f docker-compose.evidence.yml config --quiet
+make lifehub-demo
 ```
 
 ---
@@ -170,6 +205,8 @@ MIT — см. `LICENSE`. Лицензии сторонних сервисов у
 - Troubleshooting: [docs/troubleshooting.md](docs/troubleshooting.md)
 - Service docs index: [docs/services.md](docs/services.md)
 - Guidelines (please read): [docs/guidelines.md](docs/guidelines.md)
+- LifeHub: [docs/lifehub.md](docs/lifehub.md)
+- Data Engineering Stack Map: [docs/data-engineering-stack.md](docs/data-engineering-stack.md)
 
 Service docs (direct links):
 - MinIO: [infra/minio/README.md](infra/minio/README.md)
@@ -186,6 +223,7 @@ Service docs (direct links):
 - Redis: [infra/redis/README.md](infra/redis/README.md)
 - Debezium: [infra/debezium/README.md](infra/debezium/README.md)
 - Kafka UI: [infra/kafka-ui/README.md](infra/kafka-ui/README.md)
+- LifeHub: [infra/lifehub/README.md](infra/lifehub/README.md)
 
 ---
 

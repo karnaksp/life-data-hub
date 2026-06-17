@@ -117,6 +117,105 @@ CREATE TABLE IF NOT EXISTS product_suppliers(
   PRIMARY KEY(product_id, supplier_id)
 );
 
+-- ===== LifeHub local-only sports and wellbeing tables =====
+CREATE TABLE IF NOT EXISTS life_user_preferences(
+  preference_key   TEXT PRIMARY KEY,
+  preference_value TEXT NOT NULL,
+  updated_at       TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS life_spots(
+  spot_id    TEXT PRIMARY KEY,
+  label      TEXT NOT NULL,
+  latitude   DOUBLE PRECISION NOT NULL,
+  longitude  DOUBLE PRECISION NOT NULL,
+  tags       TEXT[] NOT NULL DEFAULT '{}',
+  source     TEXT NOT NULL DEFAULT 'config',
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS life_activity_log(
+  activity_id   BIGSERIAL PRIMARY KEY,
+  activity_type TEXT NOT NULL CHECK (
+    activity_type IN ('skate', 'snowboard', 'volleyball', 'moto_lesson', 'gym', 'walk', 'rest')
+  ),
+  start_time     TIMESTAMPTZ,
+  end_time       TIMESTAMPTZ,
+  location_label TEXT,
+  intensity      INT CHECK (intensity BETWEEN 1 AND 10),
+  mood           INT CHECK (mood BETWEEN 1 AND 10),
+  fatigue        INT CHECK (fatigue BETWEEN 1 AND 10),
+  pain_flag      BOOLEAN NOT NULL DEFAULT false,
+  pain_text      TEXT,
+  result         TEXT CHECK (result IN ('good', 'ok', 'bad', 'skipped')),
+  notes          TEXT,
+  logged_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS life_digest_runs(
+  digest_id    BIGSERIAL PRIMARY KEY,
+  digest_type  TEXT NOT NULL,
+  sent_to      TEXT,
+  status       TEXT NOT NULL CHECK (status IN ('planned', 'sent', 'skipped', 'failed')),
+  summary      TEXT,
+  generated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS life_recommendation_events(
+  recommendation_id   BIGSERIAL PRIMARY KEY,
+  recommendation_type TEXT NOT NULL,
+  activity            TEXT NOT NULL,
+  location_id         TEXT NOT NULL,
+  score               INT NOT NULL CHECK (score BETWEEN 0 AND 100),
+  decision            TEXT NOT NULL CHECK (decision IN ('go', 'caution', 'recover')),
+  reasons             TEXT NOT NULL,
+  generated_at        TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS life_decision_feedback(
+  feedback_id BIGSERIAL PRIMARY KEY,
+  activity    TEXT NOT NULL,
+  action      TEXT NOT NULL CHECK (action IN ('followed', 'skipped', 'changed')),
+  result      TEXT CHECK (result IN ('good', 'ok', 'bad', 'skipped')),
+  note        TEXT,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS life_signal_events(
+  signal_id   TEXT PRIMARY KEY,
+  domain      TEXT NOT NULL CHECK (domain IN ('market', 'github', 'career', 'wellbeing', 'system')),
+  source      TEXT NOT NULL,
+  title       TEXT NOT NULL,
+  direction   TEXT NOT NULL CHECK (direction IN ('positive', 'negative', 'neutral')),
+  urgency     INT NOT NULL CHECK (urgency BETWEEN 1 AND 10),
+  confidence  INT NOT NULL CHECK (confidence BETWEEN 1 AND 100),
+  summary     TEXT,
+  occurred_at TIMESTAMPTZ NOT NULL,
+  ingested_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS life_daily_context_profiles(
+  profile_date            DATE NOT NULL,
+  timezone                TEXT NOT NULL,
+  top_activity            TEXT NOT NULL,
+  top_decision            TEXT NOT NULL CHECK (top_decision IN ('go', 'caution', 'recover')),
+  top_score               INT NOT NULL CHECK (top_score BETWEEN 0 AND 100),
+  readiness_state         TEXT NOT NULL,
+  sessions_7d             INT NOT NULL CHECK (sessions_7d >= 0),
+  avg_mood_7d             NUMERIC(4,2) NOT NULL CHECK (avg_mood_7d BETWEEN 0 AND 10),
+  avg_fatigue_7d          NUMERIC(4,2) NOT NULL CHECK (avg_fatigue_7d BETWEEN 0 AND 10),
+  pain_sessions_7d        INT NOT NULL CHECK (pain_sessions_7d >= 0),
+  useful_decision_days_7d INT NOT NULL CHECK (useful_decision_days_7d BETWEEN 0 AND 7),
+  follow_rate_7d          NUMERIC(5,3) NOT NULL CHECK (follow_rate_7d BETWEEN 0 AND 1),
+  open_goal_count         INT NOT NULL CHECK (open_goal_count >= 0),
+  signal_count_7d         INT NOT NULL CHECK (signal_count_7d >= 0),
+  highest_signal_domain   TEXT NOT NULL,
+  highest_signal_urgency  INT NOT NULL CHECK (highest_signal_urgency BETWEEN 0 AND 10),
+  context_summary         TEXT NOT NULL,
+  generated_at            TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (profile_date, timezone)
+);
+
 -- ===== Indexes (idempotent) =====
 CREATE INDEX IF NOT EXISTS idx_users_country         ON users(country);
 CREATE INDEX IF NOT EXISTS idx_users_created         ON users(created_at);
@@ -138,6 +237,16 @@ CREATE INDEX IF NOT EXISTS idx_warehouse_inventory_qty ON warehouse_inventory(qt
 
 CREATE INDEX IF NOT EXISTS idx_customer_segments_segment ON customer_segments(segment);
 CREATE INDEX IF NOT EXISTS idx_customer_segments_ltv     ON customer_segments(lifetime_value);
+CREATE INDEX IF NOT EXISTS idx_life_activity_logged       ON life_activity_log(logged_at);
+CREATE INDEX IF NOT EXISTS idx_life_activity_type         ON life_activity_log(activity_type);
+CREATE INDEX IF NOT EXISTS idx_life_spots_tags            ON life_spots USING GIN(tags);
+CREATE INDEX IF NOT EXISTS idx_life_recommendation_generated ON life_recommendation_events(generated_at);
+CREATE INDEX IF NOT EXISTS idx_life_recommendation_activity  ON life_recommendation_events(activity);
+CREATE INDEX IF NOT EXISTS idx_life_feedback_created         ON life_decision_feedback(created_at);
+CREATE INDEX IF NOT EXISTS idx_life_feedback_activity        ON life_decision_feedback(activity);
+CREATE INDEX IF NOT EXISTS idx_life_signal_occurred          ON life_signal_events(occurred_at);
+CREATE INDEX IF NOT EXISTS idx_life_signal_domain            ON life_signal_events(domain);
+CREATE INDEX IF NOT EXISTS idx_life_daily_context_generated  ON life_daily_context_profiles(generated_at);
 
 -- ===== Grants (safe if run multiple times) =====
 GRANT ALL PRIVILEGES ON ALL TABLES    IN SCHEMA public TO "$PGUSER";

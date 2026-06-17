@@ -12,6 +12,8 @@ Why: Understand what runs in each profile and how to start it.
   - JupyterLab, Superset
 - `datagen` → realistic sample data.
   - Data Generator for Kafka and Postgres
+- `lifehub` → local-only personal sports and wellbeing data product.
+  - Postgres, ClickHouse, LifeHub weather ingest, place sync, readiness scoring and Telegram bot
 
 ## 🚀 How
 
@@ -23,6 +25,8 @@ Why: Understand what runs in each profile and how to start it.
   - `docker compose --profile explore up -d`
 - Add sample data:
   - `docker compose --profile datagen up -d`
+- Add LifeHub:
+  - `docker compose --profile lifehub up -d`
 
 ## 📝 Notes
 

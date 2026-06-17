@@ -1,0 +1,21 @@
+{
+  "provider": "fixture",
+  "symbols": [
+    {
+      "symbol": "SPY",
+      "open": 540.0,
+      "high": 548.0,
+      "low": 536.0,
+      "close": 546.0,
+      "timestamp": "2026-06-16T07:00:00Z"
+    },
+    {
+      "symbol": "BTCUSD",
+      "open": 100000.0,
+      "high": 104200.0,
+      "low": 98200.0,
+      "close": 103100.0,
+      "timestamp": "2026-06-16T07:00:00Z"
+    }
+  ]
+}

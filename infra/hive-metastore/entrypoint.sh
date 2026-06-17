@@ -3,6 +3,7 @@
 set -x
 
 : "${DB_DRIVER:=derby}"
+: "${HIVE_VER:=3.1.3}"
 
 SKIP_SCHEMA_INIT="${IS_RESUME:-false}"
 [[ $VERBOSE = "true" ]] && VERBOSE_MODE="--verbose" || VERBOSE_MODE=""
@@ -12,7 +13,11 @@ function initialize_hive {
   if [ "$(echo "$HIVE_VER" | cut -d '.' -f1)" -lt "4" ]; then
      COMMAND="-${SCHEMA_COMMAND:-initSchema}"
   fi
-  "$HIVE_HOME/bin/schematool" -dbType "$DB_DRIVER" "$COMMAND" "$VERBOSE_MODE"
+  SCHEMATOOL_ARGS=(-dbType "$DB_DRIVER" "$COMMAND")
+  if [ -n "$VERBOSE_MODE" ]; then
+    SCHEMATOOL_ARGS+=("$VERBOSE_MODE")
+  fi
+  "$HIVE_HOME/bin/schematool" "${SCHEMATOOL_ARGS[@]}"
   if [ $? -eq 0 ]; then
     echo "Initialized Hive Metastore Server schema successfully.."
   else
@@ -28,7 +33,7 @@ if [ -d "${HIVE_CUSTOM_CONF_DIR:-}" ]; then
   export HADOOP_CONF_DIR=$HIVE_CONF_DIR
 fi
 
-export HADOOP_CLASSPATH="/opt/hive/lib/hadoop-aws-3.3.4.jar:/opt/hive/lib/aws-java-sdk-bundle-1.12.262.jar:/opt/hive/lib/iceberg-hive-runtime-1.9.2.jar:$HADOOP_CLASSPATH"
+export HADOOP_CLASSPATH="/opt/hive/lib/hadoop-aws-3.1.0.jar:/opt/hive/lib/aws-java-sdk-bundle-1.11.271.jar:/opt/hive/lib/iceberg-hive-runtime-1.9.2.jar:$HADOOP_CLASSPATH"
 
 export HADOOP_CLIENT_OPTS="$HADOOP_CLIENT_OPTS -Xmx1G $SERVICE_OPTS \
   -Dfs.s3a.threads.keepalivetime=60000 \
@@ -70,4 +75,7 @@ if [[ "${SKIP_SCHEMA_INIT}" == "false" ]]; then
 fi
 
 export METASTORE_PORT=${METASTORE_PORT:-9083}
-exec "$HIVE_HOME/bin/start-metastore"
+if [ -x "$HIVE_HOME/bin/start-metastore" ]; then
+  exec "$HIVE_HOME/bin/start-metastore"
+fi
+exec "$HIVE_HOME/bin/hive" --service metastore -p "$METASTORE_PORT"

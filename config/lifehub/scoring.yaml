@@ -1,0 +1,15 @@
+skate:
+  max_wet_mm: 0.2
+  max_wind_gust_kmh: 35
+  min_temp_c: 2
+snowboard:
+  min_snow_depth_cm: 5
+  max_temp_c: 2
+  max_wind_gust_kmh: 45
+moto:
+  max_precipitation_mm: 0.2
+  max_wind_gust_kmh: 40
+  min_visibility_m: 5000
+  min_temp_c: 3
+volleyball:
+  max_outdoor_temp_c: 28

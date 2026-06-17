@@ -1,0 +1,22 @@
+{
+  "events": [
+    {
+      "occurred_at": "2026-06-16T19:30:00+03:00",
+      "domain": "sports",
+      "metric_name": "volleyball_practice_minutes",
+      "metric_value": 75,
+      "unit": "minutes",
+      "source_label": "demo_manual_import",
+      "note": "redacted by importer"
+    },
+    {
+      "occurred_at": "2026-06-16T21:15:00+03:00",
+      "domain": "recovery",
+      "metric_name": "sleep_readiness_estimate",
+      "metric_value": 7,
+      "unit": "score_1_10",
+      "source_label": "demo_manual_import",
+      "home_address": "redacted by importer"
+    }
+  ]
+}

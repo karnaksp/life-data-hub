@@ -1,0 +1,37 @@
+{
+  "signals": [
+    {
+      "signal_id": "demo_market_volatility_watch",
+      "domain": "market",
+      "source": "fixture",
+      "title": "Market volatility watch",
+      "direction": "negative",
+      "urgency": 7,
+      "confidence": 70,
+      "summary": "Synthetic example for future Alpaca or trading signal integration.",
+      "occurred_at": "2026-06-15T07:00:00+00:00"
+    },
+    {
+      "signal_id": "demo_github_project_focus",
+      "domain": "github",
+      "source": "fixture",
+      "title": "Project focus window",
+      "direction": "positive",
+      "urgency": 5,
+      "confidence": 80,
+      "summary": "Synthetic example for future GitHub activity and portfolio consistency context.",
+      "occurred_at": "2026-06-15T08:00:00+00:00"
+    },
+    {
+      "signal_id": "demo_system_recovery_bias",
+      "domain": "system",
+      "source": "fixture",
+      "title": "Prefer lower cognitive load after hard training",
+      "direction": "neutral",
+      "urgency": 4,
+      "confidence": 60,
+      "summary": "Synthetic local policy signal for recovery-aware daily planning.",
+      "occurred_at": "2026-06-15T09:00:00+00:00"
+    }
+  ]
+}

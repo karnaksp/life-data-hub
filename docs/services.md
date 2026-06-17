@@ -24,6 +24,7 @@ Why: Central index for per‑service docs co‑located under `infra/<service>`.
 - Debezium: [infra/debezium/README.md](../infra/debezium/README.md)
 - Kafka UI: [infra/kafka-ui/README.md](../infra/kafka-ui/README.md)
 - Data Generator: [infra/data-generator/README.md](../infra/data-generator/README.md)
+- LifeHub: [infra/lifehub/README.md](../infra/lifehub/README.md)
 
 ## 📝 Notes
 

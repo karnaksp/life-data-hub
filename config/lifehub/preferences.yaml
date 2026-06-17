@@ -1,0 +1,20 @@
+weekly_goals:
+  skate: 2
+  volleyball: 1
+  moto_lesson: 1
+  gym: 1
+  walk: 2
+
+priority_activities:
+  skate: 9
+  moto_lesson: 8
+  volleyball: 7
+  gym: 6
+  walk: 5
+  snowboard: 4
+  rest: 3
+
+recommendation_policy:
+  under_target_boost: 7
+  high_priority_boost: 3
+  max_goal_boost: 10

@@ -20,7 +20,9 @@ Why: Set up, extend, and debug the stack efficiently.
 
 - Validate the CDC/lakehouse smoke contracts before changing runtime wiring:
   - `python scripts/validate_runtime_contract.py`
+  - `python scripts/validate_lifehub_contract.py`
   - `python scripts/validate_project.py`
+  - `make lifehub-demo`
   - `docker compose --env-file .env.example config --quiet`
   - `docker compose --env-file .env.example -f docker-compose.yml -f docker-compose.evidence.yml config --quiet`
 

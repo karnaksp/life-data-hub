@@ -1,0 +1,21 @@
+services:
+  postgres:
+    ports: !reset []
+
+  minio:
+    ports: !reset []
+
+  hive-metastore:
+    ports: !reset []
+
+  trino:
+    ports: !reset []
+
+  clickhouse:
+    ports: !reset []
+
+  spark-master:
+    ports: !reset []
+    volumes:
+      - ./infra/airflow/processing/spark/jobs:/opt/spark/jobs
+      - .:/workspace:cached

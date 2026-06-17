@@ -1,0 +1,25 @@
+{
+  "elements": [
+    {
+      "type": "node",
+      "id": 1001,
+      "lat": 59.9343,
+      "lon": 30.3351,
+      "tags": {
+        "name": "Synthetic Public Skate Spot",
+        "sport": "skateboard"
+      }
+    },
+    {
+      "type": "node",
+      "id": 1002,
+      "lat": 59.9719,
+      "lon": 30.3233,
+      "tags": {
+        "name": "Synthetic Public Volleyball Area",
+        "sport": "volleyball",
+        "leisure": "pitch"
+      }
+    }
+  ]
+}

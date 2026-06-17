@@ -1,0 +1,114 @@
+{
+  "eventTime": "2026-06-15T21:01:22.431855+00:00",
+  "eventType": "COMPLETE",
+  "inputs": [
+    {
+      "name": "forecast",
+      "namespace": "https://api.open-meteo.com"
+    },
+    {
+      "name": "public_spots",
+      "namespace": "https://overpass-api.de"
+    },
+    {
+      "name": "life_activity_log",
+      "namespace": "postgres://demo/public"
+    },
+    {
+      "name": "life_decision_feedback",
+      "namespace": "postgres://demo/public"
+    },
+    {
+      "name": "context_signals.json",
+      "namespace": "fixture://lifehub"
+    },
+    {
+      "name": "locations.yaml",
+      "namespace": "config://lifehub"
+    },
+    {
+      "name": "scoring.yaml",
+      "namespace": "config://lifehub"
+    }
+  ],
+  "job": {
+    "name": "lifehub_daily_pipeline",
+    "namespace": "data-forge.local"
+  },
+  "outputs": [
+    {
+      "name": "life_weather_hourly",
+      "namespace": "clickhouse://analytics"
+    },
+    {
+      "name": "life_spots",
+      "namespace": "postgres://demo/public"
+    },
+    {
+      "name": "life_readiness_scores",
+      "namespace": "clickhouse://analytics"
+    },
+    {
+      "name": "life_recommendation_events",
+      "namespace": "postgres://demo/public"
+    },
+    {
+      "name": "life_recommendation_events",
+      "namespace": "clickhouse://analytics"
+    },
+    {
+      "name": "life_decision_feedback_events",
+      "namespace": "clickhouse://analytics"
+    },
+    {
+      "name": "life_signal_events",
+      "namespace": "postgres://demo/public"
+    },
+    {
+      "name": "life_signal_events",
+      "namespace": "clickhouse://analytics"
+    },
+    {
+      "name": "life_latest_readiness_v",
+      "namespace": "clickhouse://analytics"
+    },
+    {
+      "name": "life_location_weather_daily_v",
+      "namespace": "clickhouse://analytics"
+    },
+    {
+      "name": "life_activity_daily_v",
+      "namespace": "clickhouse://analytics"
+    },
+    {
+      "name": "life_recommendation_daily_v",
+      "namespace": "clickhouse://analytics"
+    },
+    {
+      "name": "life_decision_feedback_daily_v",
+      "namespace": "clickhouse://analytics"
+    },
+    {
+      "name": "life_useful_decision_days_v",
+      "namespace": "clickhouse://analytics"
+    },
+    {
+      "name": "life_signal_daily_v",
+      "namespace": "clickhouse://analytics"
+    }
+  ],
+  "producer": "https://github.com/OpenLineage/OpenLineage/tree/main/spec",
+  "run": {
+    "facets": {
+      "dataForge": {
+        "_producer": "https://github.com/karnaksp/data-forge",
+        "_schemaURL": "https://openlineage.io/spec/facets/1-0-0/BaseFacet.json",
+        "domain": "lifehub",
+        "privacy": "local_only",
+        "redacted": true
+      }
+    },
+    "runId": "efc4eb8a-1949-42f8-b007-942675a8f866"
+  },
+  "schemaURL": "https://openlineage.io/spec/1-0-5/OpenLineage.json"
+}

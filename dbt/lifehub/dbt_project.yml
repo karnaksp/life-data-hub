@@ -1,0 +1,17 @@
+name: lifehub
+version: 0.1.0
+config-version: 2
+
+profile: lifehub
+
+model-paths: ["models"]
+macro-paths: ["macros"]
+
+models:
+  lifehub:
+    staging:
+      +materialized: view
+      +schema: lifehub_staging
+    marts:
+      +materialized: view
+      +schema: lifehub_marts

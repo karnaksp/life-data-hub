@@ -1,0 +1,20 @@
+{
+  "nights": [
+    {
+      "slept_at": "2026-06-15T22:50:00+03:00",
+      "woke_at": "2026-06-16T06:45:00+03:00",
+      "in_bed_minutes": 500,
+      "quality_score": 82,
+      "recovery_score": 78,
+      "source": "synthetic_sleep_log"
+    },
+    {
+      "slept_at": "2026-06-16T23:40:00+03:00",
+      "woke_at": "2026-06-17T06:25:00+03:00",
+      "in_bed_minutes": 430,
+      "quality_score": 67,
+      "recovery_score": 61,
+      "source": "synthetic_sleep_log"
+    }
+  ]
+}

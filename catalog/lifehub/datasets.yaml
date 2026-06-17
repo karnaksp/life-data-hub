@@ -1,0 +1,355 @@
+version: 1
+domain: lifehub
+owner: local-data-engineering
+privacy: local_only
+
+datasets:
+  - name: config.lifehub.preferences
+    layer: config
+    system: git
+    grain: one local recommendation policy document
+    classification: privacy_safe_weekly_targets
+    freshness_slo: 7 days
+    producer: local config
+    consumers:
+      - recommendation personalization
+      - telegram /coach
+      - LifeHub Cockpit
+    pii: false
+
+  - name: postgres.public.life_spots
+    layer: operational
+    system: postgres
+    grain: one row per configured or public OSM spot
+    classification: public_location_metadata
+    freshness_slo: 7 days
+    producer: lifehub-place-sync
+    consumers:
+      - telegram /spots
+      - trino observability
+      - quality checks
+    pii: false
+
+  - name: postgres.public.life_activity_log
+    layer: operational
+    system: postgres
+    grain: one row per manual diary entry
+    classification: private_diary
+    freshness_slo: best effort
+    producer: lifehub-telegram-bot
+    consumers:
+      - telegram /week
+      - quality checks
+    pii: true
+    commit_policy: never commit raw rows, notes, pain text, or chat ids
+
+  - name: clickhouse.analytics.life_weather_hourly
+    layer: bronze
+    system: clickhouse
+    grain: one row per location per forecast hour per fetch
+    classification: public_weather
+    freshness_slo: 3 hours
+    producer: lifehub-weather-ingest
+    consumers:
+      - lifehub-score
+      - life_location_weather_daily_v
+      - quality checks
+    pii: false
+
+  - name: clickhouse.analytics.life_readiness_scores
+    layer: silver
+    system: clickhouse
+    grain: one score per activity per location per compute run
+    classification: derived_recommendation
+    freshness_slo: 3 hours
+    producer: lifehub-score
+    consumers:
+      - telegram /today
+      - life_latest_readiness_v
+      - trino observability
+    pii: false
+
+  - name: clickhouse.analytics.life_activity_events
+    layer: bronze
+    system: clickhouse
+    grain: one analytical copy per manual diary entry
+    classification: private_diary
+    freshness_slo: best effort
+    producer: lifehub-telegram-bot
+    consumers:
+      - life_activity_daily_v
+      - quality checks
+    pii: true
+    commit_policy: aggregate only in public evidence
+
+  - name: clickhouse.analytics.life_latest_readiness_v
+    layer: mart
+    system: clickhouse
+    grain: latest score per activity and location
+    classification: derived_recommendation
+    freshness_slo: 3 hours
+    producer: clickhouse view
+    consumers:
+      - dashboards
+      - trino observability
+    pii: false
+
+  - name: postgres.public.life_recommendation_events
+    layer: operational
+    system: postgres
+    grain: one row per generated personal recommendation
+    classification: derived_recommendation
+    freshness_slo: 3 hours
+    producer: lifehub-score
+    consumers:
+      - telegram /today
+      - telegram /coach
+      - evidence counts
+    pii: false
+
+  - name: clickhouse.analytics.life_recommendation_events
+    layer: silver
+    system: clickhouse
+    grain: one recommendation event per activity and location
+    classification: derived_recommendation
+    freshness_slo: 3 hours
+    producer: lifehub-score
+    consumers:
+      - life_recommendation_daily_v
+      - quality checks
+      - useful decision metrics
+    pii: false
+
+  - name: postgres.public.life_decision_feedback
+    layer: operational
+    system: postgres
+    grain: one row per feedback command about a recommendation
+    classification: behavioral_feedback
+    freshness_slo: best effort
+    producer: lifehub-telegram-bot
+    consumers:
+      - useful decision metrics
+      - quality checks
+    pii: false
+    commit_policy: aggregate counts only in public evidence
+
+  - name: clickhouse.analytics.life_decision_feedback_events
+    layer: silver
+    system: clickhouse
+    grain: one analytical copy per feedback command
+    classification: behavioral_feedback
+    freshness_slo: best effort
+    producer: lifehub-telegram-bot
+    consumers:
+      - life_decision_feedback_daily_v
+      - life_useful_decision_days_v
+      - quality checks
+    pii: false
+
+  - name: postgres.public.life_signal_events
+    layer: operational
+    system: postgres
+    grain: one row per imported context signal
+    classification: context_signal
+    freshness_slo: source dependent
+    producer: lifehub-signal-import
+    consumers:
+      - telegram /signals
+      - diary-aware recommendation digest
+      - quality checks
+    pii: false
+    commit_policy: synthetic fixtures only; no raw broker/GitHub/private market payloads
+
+  - name: clickhouse.analytics.life_signal_events
+    layer: silver
+    system: clickhouse
+    grain: one analytical context signal per source event
+    classification: context_signal
+    freshness_slo: source dependent
+    producer: lifehub-signal-import
+    consumers:
+      - life_signal_daily_v
+      - observability
+      - future recommendation policies
+    pii: false
+
+  - name: clickhouse.analytics.life_activity_feedback_profile_v
+    layer: mart
+    system: clickhouse
+    grain: one thirty-day feedback aggregate per activity
+    classification: behavioral_feedback_aggregate
+    freshness_slo: best effort
+    producer: clickhouse view
+    consumers:
+      - recommendation personalization
+      - LifeHub Cockpit
+      - quality checks
+    pii: false
+    commit_policy: aggregate only; no feedback notes
+
+  - name: postgres.public.life_daily_context_profiles
+    layer: operational
+    system: postgres
+    grain: one privacy-safe context profile per local day and timezone
+    classification: derived_personal_context
+    freshness_slo: 3 hours
+    producer: lifehub-score context-profile
+    consumers:
+      - telegram /today
+      - Temporal daily decision workflow
+      - evidence counts
+    pii: false
+    commit_policy: aggregate and derived fields only; no raw diary notes, pain text, chat ids, or tokens
+
+  - name: clickhouse.analytics.life_daily_context_profiles
+    layer: silver
+    system: clickhouse
+    grain: one analytical context profile per generation run
+    classification: derived_personal_context
+    freshness_slo: 3 hours
+    producer: lifehub-score context-profile
+    consumers:
+      - life_daily_context_latest_v
+      - LifeHub Cockpit
+      - quality checks
+    pii: false
+    commit_policy: aggregate and derived fields only
+
+  - name: clickhouse.analytics.life_daily_context_latest_v
+    layer: mart
+    system: clickhouse
+    grain: latest context profile per local day and timezone
+    classification: derived_personal_context
+    freshness_slo: 3 hours
+    producer: clickhouse view
+    consumers:
+      - LifeHub Cockpit
+      - product evidence
+      - future Telegram digest personalization
+    pii: false
+
+  - name: iceberg.bronze.lifehub_events
+    layer: bronze
+    system: iceberg
+    grain: one LifeHub landing event envelope per source event or aggregate
+    classification: mixed_privacy_envelope
+    freshness_slo: 24 hours
+    producer: lifehub_lakehouse_pipeline
+    consumers:
+      - iceberg.silver.lifehub_events
+      - Trino lakehouse quality checks
+      - future source backfills
+    pii: mixed
+    commit_policy: privacy-safe envelopes only; no Telegram tokens, chat ids, raw notes, pain text, or private addresses
+
+  - name: iceberg.silver.lifehub_events
+    layer: silver
+    system: iceberg
+    grain: one validated LifeHub event envelope with non-null source, type and event time
+    classification: typed_lifehub_event
+    freshness_slo: 24 hours
+    producer: lifehub_jsonl_to_iceberg
+    consumers:
+      - iceberg.gold.lifehub_decision_events
+      - dbt/Trino downstream models
+      - ad hoc personal analytics
+    pii: mixed
+    commit_policy: filter or aggregate private diary fields before publication
+
+  - name: iceberg.gold.lifehub_decision_events
+    layer: gold
+    system: iceberg
+    grain: one decision-oriented LifeHub event or daily profile
+    classification: derived_decision_intelligence
+    freshness_slo: 24 hours
+    producer: lifehub_jsonl_to_iceberg
+    consumers:
+      - weekly reviews
+      - product metrics
+      - future personal context graph analytics
+    pii: false
+    commit_policy: derived decision events only
+
+  - name: source_registry.activity_files
+    layer: source_contract
+    system: git
+    grain: one local activity file source definition
+    classification: private_activity_file_contract
+    freshness_slo: source dependent
+    producer: config/lifehub/source_registry.yaml
+    consumers:
+      - lifehub activity-file-import
+      - lifehub_lakehouse_pipeline
+      - future route analytics
+    pii: true
+    commit_policy: public fixtures only; real GPX, route and health files stay local
+
+  - name: lake.landing.lifehub.activity_files
+    layer: landing
+    system: object_storage
+    grain: one privacy-safe activity file summary envelope
+    classification: private_activity_aggregate
+    freshness_slo: source dependent
+    producer: lifehub activity-file-import
+    consumers:
+      - iceberg.bronze.lifehub_events
+      - weekly review
+      - daily context profile
+    pii: true
+    commit_policy: route summaries only; no private addresses or raw route files in public evidence
+
+  - name: source_registry.sleep_quality
+    layer: source_contract
+    system: git
+    grain: one local sleep quality source definition
+    classification: private_recovery_source_contract
+    freshness_slo: source dependent
+    producer: config/lifehub/source_registry.yaml
+    consumers:
+      - lifehub sleep-import
+      - lifehub_lakehouse_pipeline
+      - recovery readiness analytics
+    pii: true
+    commit_policy: raw sleep exports stay local; committed fixtures are synthetic night summaries only
+
+  - name: lake.landing.lifehub.sleep_quality
+    layer: landing
+    system: object_storage
+    grain: one privacy-safe night-level sleep quality envelope
+    classification: private_recovery_summary
+    freshness_slo: source dependent
+    producer: lifehub sleep-import
+    consumers:
+      - iceberg.bronze.lifehub_events
+      - daily context profile
+      - future recovery marts
+    pii: true
+    commit_policy: summary metrics only; no raw sleep notes, device payloads, addresses, or health exports
+
+  - name: source_registry.custom_life_events
+    layer: source_contract
+    system: git
+    grain: one generic local JSON event source definition
+    classification: custom_local_source_contract
+    freshness_slo: source dependent
+    producer: config/lifehub/source_registry.yaml
+    consumers:
+      - lifehub custom-source-import
+      - source onboarding demos
+      - future personal source connectors
+    pii: true
+    commit_policy: real source files stay local; only redacted fixtures are committed
+
+  - name: lake.landing.lifehub.custom_life_events
+    layer: landing
+    system: object_storage
+    grain: one privacy-safe generic LifeHub event envelope
+    classification: custom_local_summary
+    freshness_slo: source dependent
+    producer: lifehub custom-source-import
+    consumers:
+      - iceberg.bronze.lifehub_events
+      - source onboarding quality checks
+      - future DWH marts
+    pii: true
+    commit_policy: redacted summaries only; no notes, addresses, tokens, chat ids or raw personal text

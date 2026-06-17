@@ -1,0 +1,20 @@
+{
+  "repositories": [
+    {
+      "full_name": "karnaksp/data-forge",
+      "pushed_at": "2026-06-16T07:30:00Z",
+      "updated_at": "2026-06-16T07:30:00Z",
+      "open_issues_count": 2,
+      "stargazers_count": 1,
+      "archived": false
+    },
+    {
+      "full_name": "karnaksp/investment-signals",
+      "pushed_at": "2026-06-14T18:10:00Z",
+      "updated_at": "2026-06-14T18:10:00Z",
+      "open_issues_count": 11,
+      "stargazers_count": 0,
+      "archived": false
+    }
+  ]
+}

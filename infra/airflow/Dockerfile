@@ -1,5 +1,5 @@
 FROM apache/airflow:3.0.4-python3.12
-RUN pip install --no-cache-dir apache-airflow-providers-apache-spark pyspark==3.5.6 trino[sqlalchemy]
+RUN pip install --no-cache-dir apache-airflow-providers-apache-spark pyspark==3.5.6 trino[sqlalchemy] psycopg2-binary
 
 USER root
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -9,7 +9,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 ARG SPARK_VERSION=3.5.6
 RUN set -eux; \
     curl -fSL --connect-timeout 20 --max-time 900 --retry 5 --retry-connrefused \
-    -o /tmp/spark.tgz "https://downloads.apache.org/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop3.tgz"; \
+    -o /tmp/spark.tgz "https://downloads.apache.org/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop3.tgz" || \
+    curl -fSL --connect-timeout 20 --max-time 900 --retry 5 --retry-connrefused \
+    -o /tmp/spark.tgz "https://archive.apache.org/dist/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop3.tgz"; \
     tar -xzf /tmp/spark.tgz -C /opt; \
     mv "/opt/spark-${SPARK_VERSION}-bin-hadoop3" /opt/spark; \
     rm /tmp/spark.tgz

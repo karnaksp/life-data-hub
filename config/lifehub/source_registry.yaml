@@ -1,0 +1,151 @@
+version: 1
+owner: local-data-engineering
+privacy: local_only
+default_lake_bucket: iceberg
+default_checkpoint_bucket: checkpoints
+medallion_layers:
+  landing:
+    purpose: raw source-shaped files before table ingestion
+    path_template: s3a://iceberg/lifehub/landing/{source_name}/dt={dt}/events.jsonl
+    format: jsonl
+  bronze:
+    purpose: append-only source event envelopes with ingestion metadata
+    table_template: iceberg.bronze.lifehub_{source_name}_events
+    checkpoint_template: s3a://checkpoints/lifehub/bronze/{source_name}
+  silver:
+    purpose: typed and privacy-filtered events ready for analytics
+    table_template: iceberg.silver.lifehub_{source_name}
+  gold:
+    purpose: decision-oriented marts and daily profiles
+    table_template: iceberg.gold.lifehub_{source_name}_mart
+
+sources:
+  weather_forecast:
+    domain: weather
+    source_type: public_api
+    producer: lifehub-weather-ingest
+    landing_path: s3a://iceberg/lifehub/landing/weather_forecast/dt={dt}/events.jsonl
+    bronze_table: iceberg.bronze.lifehub_weather_forecast_events
+    silver_table: iceberg.silver.lifehub_weather_hourly
+    consumers: [readiness_scoring, daily_context_profile]
+    pii: false
+    onboarding_contract:
+      required_fields: [location_id, forecast_time, temperature_c, precipitation_mm, fetched_at]
+      event_time_field: forecast_time
+      idempotency_key: [location_id, forecast_time, fetched_at]
+
+  activity_diary:
+    domain: wellbeing
+    source_type: manual_event_log
+    producer: lifehub-telegram-bot
+    landing_path: s3a://iceberg/lifehub/landing/activity_diary/dt={dt}/events.jsonl
+    bronze_table: iceberg.bronze.lifehub_activity_diary_events
+    silver_table: iceberg.silver.lifehub_activity_sessions
+    consumers: [recommendation_personalization, weekly_review, daily_context_profile]
+    pii: true
+    commit_policy: never_export_raw_notes_or_pain_text
+    onboarding_contract:
+      required_fields: [activity_type, intensity, mood, fatigue, result, logged_at]
+      event_time_field: logged_at
+      idempotency_key: [activity_type, logged_at]
+
+  activity_files:
+    domain: sports
+    source_type: local_file_import
+    producer: lifehub activity-file-import
+    landing_path: s3a://iceberg/lifehub/landing/activity_files/dt={dt}/events.jsonl
+    bronze_table: iceberg.bronze.lifehub_activity_file_events
+    silver_table: iceberg.silver.lifehub_activity_files
+    gold_table: iceberg.gold.lifehub_activity_route_metrics
+    consumers: [weekly_review, daily_context_profile, training_consistency]
+    pii: true
+    commit_policy: public fixture files only; real route files stay local and out of git
+    onboarding_contract:
+      required_fields: [source_file, activity_type, started_at, duration_minutes, distance_km, point_count]
+      event_time_field: started_at
+      idempotency_key: [source_file, started_at]
+
+  decision_feedback:
+    domain: decision_quality
+    source_type: user_feedback
+    producer: lifehub-telegram-bot
+    landing_path: s3a://iceberg/lifehub/landing/decision_feedback/dt={dt}/events.jsonl
+    bronze_table: iceberg.bronze.lifehub_decision_feedback_events
+    silver_table: iceberg.silver.lifehub_decision_feedback
+    gold_table: iceberg.gold.lifehub_decision_outcomes
+    consumers: [useful_decision_days, recommendation_learning]
+    pii: false
+    onboarding_contract:
+      required_fields: [activity, action, created_at]
+      event_time_field: created_at
+      idempotency_key: [activity, action, created_at]
+
+  context_signals:
+    domain: context
+    source_type: multi_source_signal
+    producer: lifehub-signal-import
+    landing_path: s3a://iceberg/lifehub/landing/context_signals/dt={dt}/events.jsonl
+    bronze_table: iceberg.bronze.lifehub_context_signal_events
+    silver_table: iceberg.silver.lifehub_context_signals
+    consumers: [daily_context_profile, recommendation_risk_adjustment]
+    pii: false
+    onboarding_contract:
+      required_fields: [signal_id, domain, source, direction, urgency, confidence, occurred_at]
+      event_time_field: occurred_at
+      idempotency_key: [signal_id]
+
+  daily_context_profile:
+    domain: decision_intelligence
+    source_type: derived_profile
+    producer: lifehub-score context-profile
+    landing_path: s3a://iceberg/lifehub/landing/daily_context_profile/dt={dt}/events.jsonl
+    bronze_table: iceberg.bronze.lifehub_daily_context_profile_events
+    silver_table: iceberg.silver.lifehub_daily_context_profiles
+    gold_table: iceberg.gold.lifehub_daily_decision_profile
+    consumers: [telegram_digest, cockpit, weekly_review]
+    pii: false
+    onboarding_contract:
+      required_fields: [profile_date, top_activity, top_score, readiness_state, generated_at]
+      event_time_field: generated_at
+      idempotency_key: [profile_date, timezone]
+
+  sleep_quality:
+    domain: recovery
+    source_type: local_json_event
+    producer: lifehub sleep-import
+    landing_path: s3a://iceberg/lifehub/landing/sleep_quality/dt={dt}/events.jsonl
+    bronze_table: iceberg.bronze.lifehub_sleep_quality_events
+    silver_table: iceberg.silver.lifehub_sleep_quality
+    gold_table: iceberg.gold.lifehub_recovery_readiness
+    consumers: [daily_context_profile, recommendation_personalization, recovery_readiness]
+    pii: true
+    commit_policy: keep raw sleep exports local; write only night-level recovery summaries to landing
+    onboarding_contract:
+      required_fields: [slept_at, woke_at, duration_minutes, quality_score, recovery_score, sleep_efficiency, source, imported_at]
+      event_time_field: woke_at
+      idempotency_key: [source, woke_at]
+
+  custom_life_events:
+    domain: extensibility
+    source_type: local_json_event
+    producer: lifehub custom-source-import
+    landing_path: s3a://iceberg/lifehub/landing/custom_life_events/dt={dt}/events.jsonl
+    bronze_table: iceberg.bronze.lifehub_custom_life_event_events
+    silver_table: iceberg.silver.lifehub_custom_life_events
+    gold_table: iceberg.gold.lifehub_custom_life_event_metrics
+    consumers: [source_onboarding_demo, future_life_domains]
+    pii: true
+    commit_policy: keep real source files local; redact notes, addresses, tokens and raw personal text before landing
+    onboarding_contract:
+      required_fields: [occurred_at, domain, metric_name, metric_value]
+      event_time_field: occurred_at
+      idempotency_key: [domain, metric_name, occurred_at]
+
+new_source_template:
+  steps:
+    - add source entry here with landing, bronze, silver and privacy policy
+    - add fixture under fixtures/lifehub or configure real connector env
+    - normalize into a privacy-safe event envelope
+    - write landing JSONL with lifehub.cli custom-source-import or lake-export
+    - load into Iceberg bronze with lifehub_jsonl_to_iceberg.py
+    - add dbt or SQL mart only after bronze contract is stable
