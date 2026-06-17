@@ -209,6 +209,7 @@ This is the first step toward the Personal Context Graph: LifeHub can now treat 
 - `lifehub-telegram-bot`: polls Telegram and sends the daily digest at `LIFEHUB_DIGEST_TIME`.
 - `lifehub-temporal-worker`: runs the durable daily decision workflow on the `lifehub-daily-decision` task queue.
 - `temporal`: local Temporal dev server for workflow testing and retry/replay semantics.
+- `lifehub.observability`: writes local structured runtime logs for CLI commands, Telegram delivery, landing writes and failures.
 - `scripts/capture_lifehub_evidence.py`: writes redacted runtime counts to `docs/evidence/lifehub-evidence.md`.
 - `scripts/build_lifehub_cockpit.py`: writes the local LifeHub Cockpit to `docs/lifehub-cockpit.html`.
 
@@ -417,6 +418,32 @@ make lifehub-evidence
 ```
 
 The evidence file stores only operational counts. It does not include tokens, chat ids, personal notes, pain text, or raw diary rows.
+
+## Runtime logs
+
+LifeHub keeps human-readable command output for shell use and separately writes structured local JSONL logs. The default path is:
+
+```bash
+data/private/logs/lifehub/events.jsonl
+```
+
+This path is ignored by git. Override it with `LIFEHUB_LOG_PATH` and standard log verbosity with `LIFEHUB_LOG_LEVEL`.
+
+Inspect the latest local events:
+
+```bash
+PYTHONPATH=infra/lifehub python -m lifehub.cli logs --limit 100
+PYTHONPATH=infra/lifehub python -m lifehub.cli logs --status failure
+PYTHONPATH=infra/lifehub python -m lifehub.cli logs --component lifehub.telegram --json
+```
+
+Current structured events cover:
+
+- CLI command lifecycle: `started`, `success`, `failure`.
+- Telegram delivery: sent, skipped because credentials are absent, failed API calls.
+- Lake landing writes and manifest creation.
+
+The logger redacts fields with credential-like keys such as token, secret, password, chat id, API key and DSN. Runtime logs are local operational data, not public evidence. For committed proof use the existing redacted evidence commands.
 
 ## LifeHub Cockpit
 

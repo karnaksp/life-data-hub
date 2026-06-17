@@ -7,9 +7,22 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
+from lifehub.observability import get_logger, record_event
+
+
+LOG = get_logger(__name__)
+
 
 def send_message(token: str, chat_id: str, text: str, reply_markup: dict | None = None) -> bool:
     if not token or not chat_id:
+        record_event(
+            component="lifehub.telegram",
+            action="send_message",
+            status="skipped",
+            message="Telegram token or chat id is not configured; printed to stdout.",
+            metrics={"chars": len(text)},
+            fields={"chat_id": chat_id},
+        )
         print(text)
         return False
     url = f"https://api.telegram.org/bot{token}/sendMessage"
@@ -22,8 +35,23 @@ def send_message(token: str, chat_id: str, text: str, reply_markup: dict | None 
         with urllib.request.urlopen(request, timeout=30) as response:
             response.read()
     except urllib.error.URLError as exc:
-        print(f"Telegram send failed: {exc}")
+        LOG.warning("Telegram send failed: %s", exc)
+        record_event(
+            component="lifehub.telegram",
+            action="send_message",
+            status="failure",
+            message=str(exc),
+            metrics={"chars": len(text)},
+            fields={"chat_id": chat_id},
+        )
         return False
+    record_event(
+        component="lifehub.telegram",
+        action="send_message",
+        status="success",
+        metrics={"chars": len(text), "reply_markup": bool(reply_markup)},
+        fields={"chat_id": chat_id},
+    )
     return True
 
 
@@ -40,8 +68,15 @@ def answer_callback_query(token: str, callback_query_id: str, text: str = "") ->
         with urllib.request.urlopen(request, timeout=30) as response:
             response.read()
     except urllib.error.URLError as exc:
-        print(f"Telegram callback answer failed: {exc}")
+        LOG.warning("Telegram callback answer failed: %s", exc)
+        record_event(
+            component="lifehub.telegram",
+            action="answer_callback_query",
+            status="failure",
+            message=str(exc),
+        )
         return False
+    record_event(component="lifehub.telegram", action="answer_callback_query", status="success")
     return True
 
 
@@ -56,6 +91,19 @@ def get_updates(token: str, offset: int | None = None) -> list[dict]:
         with urllib.request.urlopen(url, timeout=35) as response:
             payload = json.loads(response.read().decode("utf-8"))
     except urllib.error.URLError as exc:
-        print(f"Telegram updates skipped: {exc}")
+        LOG.warning("Telegram updates skipped: %s", exc)
+        record_event(
+            component="lifehub.telegram",
+            action="get_updates",
+            status="failure",
+            message=str(exc),
+        )
         return []
-    return payload.get("result", [])
+    updates = payload.get("result", [])
+    record_event(
+        component="lifehub.telegram",
+        action="get_updates",
+        status="success",
+        metrics={"updates": len(updates)},
+    )
+    return updates

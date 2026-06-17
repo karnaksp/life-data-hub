@@ -38,6 +38,7 @@
 - **Локальная приватность** - реальные токены, заметки, адреса, health/broker exports не попадают в репозиторий.
 - **Lakehouse pipeline** - landing JSONL -> Spark -> Iceberg Bronze/Silver/Gold -> Trino.
 - **DataOps слой** - data contracts, catalog, expectations, validators, lineage и evidence.
+- **Observability слой** - CLI, Telegram и landing writers пишут локальный JSONL runtime log для анализа запусков.
 - **Retail CDC сценарий** - сохранен как инженерная лаборатория для Kafka/Debezium/ClickHouse/Trino.
 
 ## Какие мои данные можно подключить
@@ -85,6 +86,7 @@ MVP не отправляет личные данные во внешние се
 | Orchestration | Airflow, Temporal | Плановые и durable workflows |
 | Analytics engineering | dbt-compatible SQL | Staging и mart модели |
 | DataOps | contracts, catalog, expectations, validators, evidence | Проверяемость и воспроизводимость |
+| Observability | Python logging, local JSONL runtime events | Локальный audit trail команд, Telegram delivery, landing write и ошибок |
 | Product interface | Telegram Bot API | Первый полезный пользовательский интерфейс |
 
 Подробная карта стека: [docs/data-engineering-stack.md](docs/data-engineering-stack.md).
@@ -121,6 +123,12 @@ docker compose --profile lifehub up -d
 
 ```bash
 make lifehub-demo
+```
+
+Локальные runtime-логи хранятся по умолчанию в `data/private/logs/lifehub/events.jsonl` и не коммитятся. Посмотреть сводку:
+
+```bash
+PYTHONPATH=infra/lifehub python -m lifehub.cli logs --limit 50
 ```
 
 Полный lakehouse smoke:
