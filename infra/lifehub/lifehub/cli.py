@@ -38,7 +38,7 @@ from lifehub.lake import (
     write_landing_manifest,
 )
 from lifehub.local_files import LOCAL_KINDS, import_local_file, scan_inbox
-from lifehub.places import fetch_overpass_spots, load_spot_fixture
+from lifehub.places import fetch_overpass_spots, load_spot_fixture, place_spot_events
 from lifehub.recommendations import (
     build_recommendations,
     render_coach_summary,
@@ -624,6 +624,12 @@ def cmd_place_sync(args: argparse.Namespace) -> int:
             "\n".join(json.dumps(asdict(spot)) for spot in spots) + "\n",
             encoding="utf-8",
         )
+    if args.output_root:
+        written = write_landing_events(place_spot_events(spots), args.output_root, args.dt)
+        manifest = write_landing_manifest(written, args.output_root)
+        for path, rows in sorted(written.items()):
+            print(f"- {path}: {rows}")
+        print(f"Manifest: {manifest}")
     if not args.output_only:
         upsert_spots_postgres(cfg.postgres_dsn, spots)
     print(f"Synced {len(spots)} LifeHub spots from {args.source}.")
@@ -1252,6 +1258,8 @@ def build_parser() -> argparse.ArgumentParser:
     places.add_argument("--radius-m", type=int, default=12000)
     places.add_argument("--fixture", type=Path)
     places.add_argument("--output")
+    places.add_argument("--output-root", type=Path)
+    places.add_argument("--dt", default="", help="Landing partition date, defaults to UTC today")
     places.add_argument("--output-only", action="store_true")
     places.set_defaults(func=cmd_place_sync)
 

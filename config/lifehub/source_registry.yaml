@@ -90,6 +90,25 @@ sources:
       event_time_field: forecast_time
       idempotency_key: [location_id, forecast_time, fetched_at]
 
+  place_spots:
+    tier: tier_1_foundation
+    domain: places
+    source_type: public_map_api
+    privacy_class: public_context
+    raw_policy: public_fixture_ok
+    local_policy: summarized_landing_only
+    producer: lifehub place-sync
+    landing_path: s3a://iceberg/lifehub/landing/place_spots/dt={dt}/events.jsonl
+    bronze_table: iceberg.bronze.lifehub_place_spot_events
+    silver_table: iceberg.silver.lifehub_place_spots
+    consumers: [spot_ranking, outdoor_readiness, daily_context_profile]
+    pii: false
+    commit_policy: committed examples are public OSM/config spots only; private home/work labels are forbidden
+    onboarding_contract:
+      required_fields: [spot_id, label, latitude, longitude, tags, source, observed_at]
+      event_time_field: observed_at
+      idempotency_key: [spot_id, source]
+
   activity_diary:
     tier: tier_2_personal_context
     domain: wellbeing

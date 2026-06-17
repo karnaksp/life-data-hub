@@ -6,8 +6,11 @@ import json
 import urllib.parse
 import urllib.request
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+
+from lifehub.lake import lake_envelope
 
 
 OVERPASS_URL = "https://overpass-api.de/api/interpreter"
@@ -101,3 +104,42 @@ def spot_tags(tags: dict[str, Any]) -> tuple[str, ...]:
     if tags.get("sport") == "volleyball":
         result.append("volleyball")
     return tuple(dict.fromkeys(result))
+
+
+def place_spot_events(spots: list[Spot]) -> list[dict]:
+    events = []
+    observed_at = datetime.now(timezone.utc).isoformat()
+    for spot in spots:
+        events.append(
+            lake_envelope(
+                source_name="place_spots",
+                event_type="public_place_spot",
+                event_time=observed_at,
+                privacy_class="public_context",
+                source_tier="tier_1_foundation",
+                source_type="public_map_api",
+                raw_policy="public_fixture_ok",
+                local_policy="summarized_landing_only",
+                payload_summary={
+                    "spot_id": spot.id,
+                    "label": spot.label,
+                    "tags": list(spot.tags),
+                },
+                metrics={
+                    "latitude": round(spot.latitude, 6),
+                    "longitude": round(spot.longitude, 6),
+                },
+                tags=["places", *spot.tags],
+                quality_flags=["public_osm_or_config"],
+                payload={
+                    "spot_id": spot.id,
+                    "label": spot.label,
+                    "latitude": round(spot.latitude, 6),
+                    "longitude": round(spot.longitude, 6),
+                    "tags": list(spot.tags),
+                    "source": spot.source,
+                    "observed_at": observed_at,
+                },
+            )
+        )
+    return events

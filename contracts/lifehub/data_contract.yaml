@@ -104,6 +104,7 @@ source_architecture:
   registry_alignment:
     required_source_names:
       - weather_forecast
+      - place_spots
       - activity_diary
       - activity_files
       - decision_feedback
@@ -135,6 +136,7 @@ source_architecture:
       - secrets_inventory
     active_fixture_sources:
       - weather_forecast
+      - place_spots
       - activity_diary
       - activity_files
       - decision_feedback

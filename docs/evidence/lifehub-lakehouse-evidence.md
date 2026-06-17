@@ -1,6 +1,6 @@
 # LifeHub Lakehouse Evidence
 
-Generated at: `2026-06-17T17:12:04.763484+00:00`
+Generated at: `2026-06-17T17:15:42.648387+00:00`
 
 This file captures redacted local evidence for the LifeHub lake landing layer. It reports source-level counts only and checks that landing JSONL files do not contain Telegram tokens, chat ids, raw diary notes, raw sleep notes, or pain text.
 
@@ -32,6 +32,7 @@ This file captures redacted local evidence for the LifeHub lake landing layer. I
 | market_watchlist_snapshot | `1` |
 | moto_learning_log | `1` |
 | personal_notes_summary | `1` |
+| place_spots | `2` |
 | secrets_inventory | `1` |
 | sleep_quality | `3` |
 | tasks_and_projects | `1` |

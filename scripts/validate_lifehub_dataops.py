@@ -71,6 +71,7 @@ REQUIRED_DATASETS = [
 
 ACTIVE_FIXTURE_SOURCES = {
     "weather_forecast": ["fixtures/lifehub/open_meteo_clear_day.json"],
+    "place_spots": ["fixtures/lifehub/overpass_spots.json"],
     "activity_diary": ["fixtures/lifehub/week_summary.json"],
     "activity_files": ["fixtures/lifehub/activity_route_spb_public.gpx"],
     "decision_feedback": ["fixtures/lifehub/decision_metrics.json", "fixtures/lifehub/feedback_profile.json"],

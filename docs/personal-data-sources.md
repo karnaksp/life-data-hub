@@ -18,6 +18,7 @@ The registry is intentionally broader than the current runnable fixtures. Tier 1
 | Source | Tier | Domain | Privacy Class | Status | Allowed Payload |
 | --- | --- | --- | --- | --- | --- |
 | `weather_forecast` | Tier 1 | Weather | `public_context` | Active fixture/API | Forecast facts by configured location id. |
+| `place_spots` | Tier 1 | Places | `public_context` | Active fixture/API | Public OSM/config spot candidates for skate, volleyball, parks and outdoor decisions. |
 | `context_signals` | Tier 1 | Context | `public_context` | Active fixture/API | Compact market, GitHub, career, wellbeing, or system signals. |
 | `external_source_items` | Tier 1 | Managed links | `public_context` | Active fixture/local subscriptions | Telegram channel, RSS, news URL, API JSON, and event stream items from local subscriptions. |
 | `decision_feedback` | Tier 1 | Decision quality | `private_behavior_summary` | Active | Follow/skip/change feedback without raw notes. |

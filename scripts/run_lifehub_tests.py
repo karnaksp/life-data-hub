@@ -19,7 +19,7 @@ from lifehub.diary import capture_to_activity_log, command_name, parse_capture_c
 from lifehub.feedback import feedback_keyboard, parse_feedback_callback, parse_feedback_command
 from lifehub.generic_sources import custom_source_events, load_json_rows
 from lifehub.local_files import detect_local_kind, import_local_file, scan_inbox
-from lifehub.places import load_spot_fixture
+from lifehub.places import load_spot_fixture, place_spot_events
 from lifehub.recommendations import (
     build_recommendations,
     render_coach_summary,
@@ -615,6 +615,13 @@ class PlaceTests(unittest.TestCase):
         self.assertEqual(len(spots), 2)
         self.assertIn("skate", spots[0].tags)
         self.assertEqual(spots[0].source, "overpass")
+
+    def test_place_spots_become_lake_events(self) -> None:
+        spots = load_spot_fixture(FIXTURES / "overpass_spots.json")
+        events = place_spot_events(spots)
+        self.assertEqual(events[0]["source_name"], "place_spots")
+        self.assertEqual(events[0]["privacy_class"], "public_context")
+        self.assertIn("latitude", events[0]["payload"])
 
 
 class SignalTests(unittest.TestCase):
