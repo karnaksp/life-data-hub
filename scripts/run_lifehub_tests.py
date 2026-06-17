@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import unittest
+import json
 import os
 import subprocess
 import sys
@@ -34,6 +35,16 @@ from lifehub.source_onboarding import (
     apply_registry_entry,
     registry_entry,
     write_onboarding_package,
+)
+from lifehub.source_subscriptions import (
+    add_subscription,
+    infer_source_type,
+    load_subscriptions,
+    parse_source_add_command,
+    remove_subscription,
+    render_subscriptions,
+    set_subscription_enabled,
+    subscription_events,
 )
 from lifehub.storage import clickhouse_datetime
 from lifehub.weather import load_fixture, normalize_weather
@@ -569,6 +580,60 @@ class SignalTests(unittest.TestCase):
         self.assertTrue(any(signal.title == "Market volatility watch" for signal in signals))
 
 
+class SourceSubscriptionTests(unittest.TestCase):
+    def test_infers_common_managed_source_types(self) -> None:
+        self.assertEqual(infer_source_type("https://t.me/s/public_channel"), "telegram_channel")
+        self.assertEqual(infer_source_type("https://example.com/feed.xml"), "rss_feed")
+        self.assertEqual(infer_source_type("wss://example.com/events"), "event_stream")
+        self.assertEqual(infer_source_type("https://example.com/api/items.json"), "api_json")
+        self.assertEqual(infer_source_type("https://example.com/news/story"), "news_url")
+
+    def test_add_pause_resume_remove_subscription(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            path = Path(tmp_dir) / "subscriptions.json"
+            subscription, created = add_subscription(
+                path,
+                "https://example.com/feed.xml",
+                label="Demo Feed",
+                domain="news",
+                tags=["spb", "demo"],
+            )
+            self.assertTrue(created)
+            self.assertEqual(subscription.source_type, "rss_feed")
+            self.assertEqual(len(load_subscriptions(path)), 1)
+            paused = set_subscription_enabled(path, subscription.subscription_id[:8], False)
+            self.assertFalse(paused.enabled)
+            resumed = set_subscription_enabled(path, subscription.subscription_id[:8], True)
+            self.assertTrue(resumed.enabled)
+            removed = remove_subscription(path, subscription.subscription_id[:8])
+            self.assertEqual(removed.subscription_id, subscription.subscription_id)
+            self.assertEqual(load_subscriptions(path), [])
+
+    def test_parse_source_add_command(self) -> None:
+        parsed = parse_source_add_command(
+            "/source_add rss_feed https://example.com/feed.xml label=MarketFeed domain=trading tags=market,watchlist"
+        )
+        self.assertEqual(parsed["source_type"], "rss_feed")
+        self.assertEqual(parsed["reference"], "https://example.com/feed.xml")
+        self.assertEqual(parsed["label"], "MarketFeed")
+        self.assertEqual(parsed["domain"], "trading")
+        self.assertIn("market", parsed["tags"])
+
+    def test_rss_subscription_becomes_privacy_safe_landing_events(self) -> None:
+        subscriptions = load_subscriptions(FIXTURES / "source_subscriptions.json")
+        events = subscription_events(subscriptions, fixture=FIXTURES / "rss_feed.xml")
+        self.assertEqual(len(events), 2)
+        self.assertTrue(all(event["source_name"] == "external_source_items" for event in events))
+        self.assertTrue(all("reference_hash" in event["payload"] for event in events))
+        self.assertTrue(all("https://example.com" not in json.dumps(event["payload"]) for event in events))
+        self.assertIn("title_preview", events[0]["payload_summary"])
+
+    def test_render_subscriptions_names_short_ids(self) -> None:
+        text = render_subscriptions(FIXTURES / "source_subscriptions.json")
+        self.assertIn("LifeHub source subscriptions", text)
+        self.assertIn("Synthetic RSS demo", text)
+
+
 class StorageTests(unittest.TestCase):
     def test_clickhouse_datetime_normalization(self) -> None:
         self.assertEqual(
@@ -623,6 +688,22 @@ class TemporalContractTests(unittest.TestCase):
         self.assertIn('name == "/sources"', text)
         self.assertIn('name == "/data_gaps"', text)
         self.assertIn("CAPTURE_COMMANDS", text)
+
+    def test_managed_source_commands_are_registered(self) -> None:
+        text = (ROOT / "infra/lifehub/lifehub/cli.py").read_text(encoding="utf-8")
+        for phrase in [
+            'sub.add_parser("source-add")',
+            'sub.add_parser("source-list")',
+            'sub.add_parser("source-pause")',
+            'sub.add_parser("source-resume")',
+            'sub.add_parser("source-remove")',
+            'sub.add_parser("source-sync")',
+            "handle_source_subscription_command",
+            "/source_add",
+            "/source_list",
+            "/source_sync",
+        ]:
+            self.assertIn(phrase, text)
 
     def test_daily_workflow_orchestrates_expected_steps(self) -> None:
         text = (ROOT / "infra/lifehub/lifehub/temporal/workflows.py").read_text(encoding="utf-8")

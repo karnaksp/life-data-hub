@@ -50,6 +50,7 @@ Life Data Hub теперь проектируется как полный пер
 | Sports | skate, snowboard, volleyball, gym, GPX/FIT/TCX activity files | route/session summaries без private coordinates |
 | Recovery | sleep CSV/JSON, future health exports | night/day-level metrics без raw device payload |
 | Projects | GitHub activity, learning notes, source freshness | public/context summaries and topic buckets |
+| Managed links | Telegram channels, RSS feeds, news URLs, API JSON, event streams | local subscriptions; landing keeps URL hashes and public previews |
 | Trading | market snapshots, watchlist, trade journal | hashed instruments and risk/result summaries |
 | Finance/location/communications | expenses, broad location areas, message metadata | planned Tier 3 summaries; no account data, exact addresses or message bodies |
 | Admin/security | documents and secrets inventory | planned pointer-only metadata, never raw payloads |
@@ -238,6 +239,7 @@ PYTHONPATH=infra/lifehub python -m lifehub.cli source-onboard sleep_quality \
 - [docs/personal-data-sources.md](docs/personal-data-sources.md) - полный каталог персональных источников;
 - [docs/privacy-model.md](docs/privacy-model.md) - local-first privacy policy;
 - [docs/source-onboarding-playbook.md](docs/source-onboarding-playbook.md) - как добавлять новый источник;
+- [docs/source-subscriptions.md](docs/source-subscriptions.md) - как добавлять Telegram/RSS/news/event-stream ссылки из Telegram;
 - [docs/telegram-data-capture.md](docs/telegram-data-capture.md) - Telegram capture commands.
 
 ## Releases и packages

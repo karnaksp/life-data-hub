@@ -1,4 +1,4 @@
-.PHONY: validate lifehub-tests lifehub-score-fixture lifehub-weekly-review-fixture lifehub-metrics-fixture lifehub-lake-export-fixture lifehub-sleep-fixture lifehub-custom-source-fixture lifehub-source-onboard-demo lifehub-source-map-demo lifehub-full-source-demo lifehub-lakehouse-runtime-smoke lifehub-demo lifehub-evidence-flow lifehub-evidence-flow-temporal lifehub-evidence-flow-plan lifehub-up-local lifehub-temporal-up lifehub-temporal-start-fixture lifehub-temporal-start-weekly-fixture lifehub-apply-marts lifehub-quality lifehub-lineage lifehub-evidence lifehub-cockpit lifehub-cockpit-demo
+.PHONY: validate lifehub-tests lifehub-score-fixture lifehub-weekly-review-fixture lifehub-metrics-fixture lifehub-lake-export-fixture lifehub-sleep-fixture lifehub-custom-source-fixture lifehub-source-onboard-demo lifehub-source-subscription-demo lifehub-source-map-demo lifehub-full-source-demo lifehub-lakehouse-runtime-smoke lifehub-demo lifehub-evidence-flow lifehub-evidence-flow-temporal lifehub-evidence-flow-plan lifehub-up-local lifehub-temporal-up lifehub-temporal-start-fixture lifehub-temporal-start-weekly-fixture lifehub-apply-marts lifehub-quality lifehub-lineage lifehub-evidence lifehub-cockpit lifehub-cockpit-demo
 
 validate:
 	python scripts/validate_project.py
@@ -36,11 +36,18 @@ lifehub-source-onboard-demo:
 	rm -rf tmp/lifehub/source_onboarding/sleep_quality
 	PYTHONPATH=infra/lifehub python -m lifehub.cli source-onboard sleep_quality --domain recovery --source-type local_json_event --event-type sleep_metric --required-fields occurred_at,domain,metric_name,metric_value --output-dir tmp/lifehub/source_onboarding
 
+lifehub-source-subscription-demo:
+	rm -rf tmp/lake/lifehub/landing/external_source_items
+	PYTHONPATH=infra/lifehub python -m lifehub.cli source-list --subscriptions fixtures/lifehub/source_subscriptions.json
+	PYTHONPATH=infra/lifehub python -m lifehub.cli source-sync --subscriptions fixtures/lifehub/source_subscriptions.json --fixture fixtures/lifehub/rss_feed.xml --output-root tmp/lake --dt 2026-06-16
+	python scripts/validate_lifehub_dataops.py --landing-root tmp/lake --write-source-map docs/evidence/lifehub-source-map-demo.md
+
 lifehub-source-map-demo:
 	python scripts/validate_lifehub_dataops.py --write-source-map docs/evidence/lifehub-source-map-demo.md
 
 lifehub-full-source-demo: lifehub-lake-export-fixture
 	PYTHONPATH=infra/lifehub python -m lifehub.cli inbox-scan fixtures/lifehub/local_inbox --output-root tmp/lake --dt 2026-06-16
+	PYTHONPATH=infra/lifehub python -m lifehub.cli source-sync --subscriptions fixtures/lifehub/source_subscriptions.json --fixture fixtures/lifehub/rss_feed.xml --output-root tmp/lake --dt 2026-06-16
 	python scripts/capture_lifehub_lake_evidence.py
 	python scripts/validate_lifehub_dataops.py --landing-root tmp/lake --write-source-map docs/evidence/lifehub-source-map-demo.md
 

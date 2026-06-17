@@ -65,6 +65,17 @@ from lifehub.source_onboarding import (
     registry_entry,
     write_onboarding_package,
 )
+from lifehub.source_subscriptions import (
+    URL_COMMANDS,
+    add_subscription,
+    load_subscriptions,
+    parse_source_add_command,
+    remove_subscription,
+    render_subscriptions,
+    set_subscription_enabled,
+    source_command_selector,
+    subscription_events,
+)
 from lifehub.storage import (
     fetch_recent_signals_postgres,
     fetch_decision_metrics_postgres,
@@ -426,6 +437,66 @@ def cmd_data_gaps(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_source_add(args: argparse.Namespace) -> int:
+    cfg = env_config()
+    tags = [tag.strip() for tag in args.tags.split(",") if tag.strip()]
+    subscription, created = add_subscription(
+        args.subscriptions or cfg.source_subscriptions_path,
+        args.reference,
+        source_type=args.source_type,
+        label=args.label,
+        domain=args.domain,
+        tags=tags,
+        cadence=args.cadence,
+        privacy_class=args.privacy_class,
+    )
+    action = "Added" if created else "Updated"
+    print(f"{action} source {subscription.subscription_id}: {subscription.source_type} {subscription.label}")
+    return 0
+
+
+def cmd_source_list(args: argparse.Namespace) -> int:
+    cfg = env_config()
+    print(render_subscriptions(args.subscriptions or cfg.source_subscriptions_path))
+    return 0
+
+
+def cmd_source_pause(args: argparse.Namespace) -> int:
+    cfg = env_config()
+    subscription = set_subscription_enabled(args.subscriptions or cfg.source_subscriptions_path, args.selector, False)
+    print(f"Paused source {subscription.subscription_id}: {subscription.label}")
+    return 0
+
+
+def cmd_source_resume(args: argparse.Namespace) -> int:
+    cfg = env_config()
+    subscription = set_subscription_enabled(args.subscriptions or cfg.source_subscriptions_path, args.selector, True)
+    print(f"Resumed source {subscription.subscription_id}: {subscription.label}")
+    return 0
+
+
+def cmd_source_remove(args: argparse.Namespace) -> int:
+    cfg = env_config()
+    subscription = remove_subscription(args.subscriptions or cfg.source_subscriptions_path, args.selector)
+    print(f"Removed source {subscription.subscription_id}: {subscription.label}")
+    return 0
+
+
+def cmd_source_sync(args: argparse.Namespace) -> int:
+    cfg = env_config()
+    subscriptions = load_subscriptions(args.subscriptions or cfg.source_subscriptions_path)
+    if args.selector:
+        subscriptions = [item for item in subscriptions if item.subscription_id.startswith(args.selector)]
+    events = subscription_events(subscriptions, fixture=args.fixture, fetch=args.fetch, limit=args.limit)
+    written = write_landing_events(events, args.output_root, args.dt)
+    manifest = write_landing_manifest(written, args.output_root)
+    print(f"Synced {len(events)} external_source_items events from {len(subscriptions)} subscriptions.")
+    for path, rows in sorted(written.items()):
+        print(f"- {path}: {rows}")
+    print(f"Manifest: {manifest}")
+    return 0
+
+
 def compute_scores(cfg, fixture_path: Path | None = None):
     scoring = load_scoring(cfg.scoring_path)
     locations = load_locations(cfg.locations_path)
@@ -716,6 +787,12 @@ def handle_telegram_text(text: str, cfg) -> None:
         except Exception as exc:
             text_out = f"LifeHub data gaps: context profile unavailable ({exc})."
         send_message(cfg.telegram_token, cfg.telegram_chat_id, text_out)
+    elif name in URL_COMMANDS:
+        try:
+            text_out = handle_source_subscription_command(text, cfg)
+        except ValueError as exc:
+            text_out = str(exc)
+        send_message(cfg.telegram_token, cfg.telegram_chat_id, text_out)
     elif name in CAPTURE_COMMANDS:
         try:
             event = parse_capture_command(text)
@@ -761,8 +838,41 @@ def handle_telegram_text(text: str, cfg) -> None:
         send_message(
             cfg.telegram_token,
             cfg.telegram_chat_id,
-            "Commands: /today, /review, /metrics, /spots, /signals, /sources, /data_gaps, /week, /goals, /coach, /done, /skip, /log activity intensity mood fatigue result notes, /sleep, /mood, /pain, /plan, /moto, /trade, /note",
+            "Commands: /today, /review, /metrics, /spots, /signals, /sources, /data_gaps, /source_add, /source_list, /source_pause, /source_resume, /source_remove, /source_sync, /week, /goals, /coach, /done, /skip, /log activity intensity mood fatigue result notes, /sleep, /mood, /pain, /plan, /moto, /trade, /note",
         )
+
+
+def handle_source_subscription_command(text: str, cfg) -> str:
+    name = command_name(text)
+    path = cfg.source_subscriptions_path
+    if name == "/source_add":
+        parsed = parse_source_add_command(text)
+        subscription, created = add_subscription(path, **parsed)
+        action = "Added" if created else "Updated"
+        return f"{action} source {subscription.subscription_id[:8]}: {subscription.source_type} {subscription.label}"
+    if name == "/source_list":
+        return render_subscriptions(path)
+    if name == "/source_pause":
+        subscription = set_subscription_enabled(path, source_command_selector(text, name), False)
+        return f"Paused source {subscription.subscription_id[:8]}: {subscription.label}"
+    if name == "/source_resume":
+        subscription = set_subscription_enabled(path, source_command_selector(text, name), True)
+        return f"Resumed source {subscription.subscription_id[:8]}: {subscription.label}"
+    if name == "/source_remove":
+        subscription = remove_subscription(path, source_command_selector(text, name))
+        return f"Removed source {subscription.subscription_id[:8]}: {subscription.label}"
+    if name == "/source_sync":
+        subscriptions = load_subscriptions(path)
+        selector = ""
+        parts = text.strip().split(maxsplit=1)
+        if len(parts) == 2:
+            selector = parts[1].strip()
+            subscriptions = [item for item in subscriptions if item.subscription_id.startswith(selector)]
+        events = subscription_events(subscriptions, fetch=True, limit=10)
+        written = write_landing_events(events, Path("tmp/lake"))
+        write_landing_manifest(written, Path("tmp/lake"))
+        return f"Synced {len(events)} source events from {len(subscriptions)} subscriptions."
+    raise ValueError("Use /source_add, /source_list, /source_pause, /source_resume, /source_remove or /source_sync.")
 
 
 def handle_telegram_callback(callback: dict, cfg) -> None:
@@ -1087,6 +1197,46 @@ def build_parser() -> argparse.ArgumentParser:
 
     sub.add_parser("sources").set_defaults(func=cmd_sources)
     sub.add_parser("source-status").set_defaults(func=cmd_source_status)
+
+    source_add = sub.add_parser("source-add")
+    source_add.add_argument("reference")
+    source_add.add_argument("--source-type", default="auto")
+    source_add.add_argument("--label", default="")
+    source_add.add_argument("--domain", default="")
+    source_add.add_argument("--tags", default="")
+    source_add.add_argument("--cadence", default="manual")
+    source_add.add_argument("--privacy-class", default="public_context")
+    source_add.add_argument("--subscriptions", type=Path)
+    source_add.set_defaults(func=cmd_source_add)
+
+    source_list = sub.add_parser("source-list")
+    source_list.add_argument("--subscriptions", type=Path)
+    source_list.set_defaults(func=cmd_source_list)
+
+    source_pause = sub.add_parser("source-pause")
+    source_pause.add_argument("selector")
+    source_pause.add_argument("--subscriptions", type=Path)
+    source_pause.set_defaults(func=cmd_source_pause)
+
+    source_resume = sub.add_parser("source-resume")
+    source_resume.add_argument("selector")
+    source_resume.add_argument("--subscriptions", type=Path)
+    source_resume.set_defaults(func=cmd_source_resume)
+
+    source_remove = sub.add_parser("source-remove")
+    source_remove.add_argument("selector")
+    source_remove.add_argument("--subscriptions", type=Path)
+    source_remove.set_defaults(func=cmd_source_remove)
+
+    source_sync = sub.add_parser("source-sync")
+    source_sync.add_argument("--subscriptions", type=Path)
+    source_sync.add_argument("--selector", default="")
+    source_sync.add_argument("--fixture", type=Path)
+    source_sync.add_argument("--fetch", action="store_true")
+    source_sync.add_argument("--limit", type=int, default=20)
+    source_sync.add_argument("--output-root", type=Path, default=Path("tmp/lake"))
+    source_sync.add_argument("--dt", default="", help="Landing partition date, defaults to UTC today")
+    source_sync.set_defaults(func=cmd_source_sync)
 
     data_gaps = sub.add_parser("data-gaps")
     data_gaps.add_argument("--fixture", type=Path)

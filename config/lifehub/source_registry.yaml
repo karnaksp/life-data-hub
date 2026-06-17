@@ -166,6 +166,26 @@ sources:
       event_time_field: occurred_at
       idempotency_key: [signal_id]
 
+  external_source_items:
+    tier: tier_1_foundation
+    domain: managed_sources
+    source_type: managed_url_subscription
+    privacy_class: public_context
+    raw_policy: local_raw_only
+    local_policy: summarized_landing_only
+    producer: lifehub source-sync
+    landing_path: s3a://iceberg/lifehub/landing/external_source_items/dt={dt}/events.jsonl
+    bronze_table: iceberg.bronze.lifehub_external_source_item_events
+    silver_table: iceberg.silver.lifehub_external_source_items
+    gold_table: iceberg.gold.lifehub_external_source_context
+    consumers: [context_signals, daily_context_profile, source_freshness, data_gaps]
+    pii: false
+    commit_policy: real subscription URLs stay in data/private; committed examples use synthetic public links only
+    onboarding_contract:
+      required_fields: [subscription_id, source_type, domain, label, reference_hash, published_at]
+      event_time_field: published_at
+      idempotency_key: [subscription_id, published_at, item_url_hash]
+
   daily_context_profile:
     tier: tier_1_foundation
     domain: decision_intelligence

@@ -108,6 +108,7 @@ source_architecture:
       - activity_files
       - decision_feedback
       - context_signals
+      - external_source_items
       - daily_context_profile
       - sleep_quality
       - custom_life_events
@@ -138,6 +139,7 @@ source_architecture:
       - activity_files
       - decision_feedback
       - context_signals
+      - external_source_items
       - daily_context_profile
       - sleep_quality
       - custom_life_events

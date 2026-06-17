@@ -19,6 +19,7 @@ The registry is intentionally broader than the current runnable fixtures. Tier 1
 | --- | --- | --- | --- | --- | --- |
 | `weather_forecast` | Tier 1 | Weather | `public_context` | Active fixture/API | Forecast facts by configured location id. |
 | `context_signals` | Tier 1 | Context | `public_context` | Active fixture/API | Compact market, GitHub, career, wellbeing, or system signals. |
+| `external_source_items` | Tier 1 | Managed links | `public_context` | Active fixture/local subscriptions | Telegram channel, RSS, news URL, API JSON, and event stream items from local subscriptions. |
 | `decision_feedback` | Tier 1 | Decision quality | `private_behavior_summary` | Active | Follow/skip/change feedback without raw notes. |
 | `daily_context_profile` | Tier 1 | Decision intelligence | `derived_context` | Active | Daily aggregate recommendation context. |
 | `activity_diary` | Tier 2 | Wellbeing | `private_behavior_summary` | Active local input | Activity, intensity, mood, fatigue, result; no raw notes or pain text. |
@@ -91,6 +92,6 @@ Existing runtime code writes the full `lifehub.lake.v1` envelope. New connectors
 
 Committed fixtures remain synthetic or public-safe:
 
-- Weather, place, market, GitHub, decision metrics, feedback, weekly review, sleep, calendar, moto learning, trade journal, personal notes, custom events, and context signals use compact fixture payloads.
+- Weather, place, market, GitHub, managed URL subscriptions, decision metrics, feedback, weekly review, sleep, calendar, moto learning, trade journal, personal notes, custom events, and context signals use compact fixture payloads.
 - `activity_route_spb_public.gpx` is a public synthetic route example. Real GPX/FIT/TCX files stay local.
 - No fixture should contain Telegram tokens, chat ids, raw diary notes, pain text, private addresses, bank data, message bodies, document numbers, or secret values.

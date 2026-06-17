@@ -28,6 +28,7 @@ ROOT = discover_repo_root()
 DEFAULT_LOCATIONS = ROOT / "config" / "lifehub" / "locations.yaml"
 DEFAULT_SCORING = ROOT / "config" / "lifehub" / "scoring.yaml"
 DEFAULT_PREFERENCES = ROOT / "config" / "lifehub" / "preferences.yaml"
+DEFAULT_SOURCE_SUBSCRIPTIONS = ROOT / "data" / "private" / "lifehub" / "source_subscriptions.json"
 
 
 @dataclass(frozen=True)
@@ -46,6 +47,7 @@ class LifeHubConfig:
     locations_path: Path
     scoring_path: Path
     preferences_path: Path
+    source_subscriptions_path: Path
     postgres_dsn: str
     clickhouse_url: str
     telegram_token: str
@@ -61,6 +63,7 @@ def env_config() -> LifeHubConfig:
         locations_path=Path(os.getenv("LIFEHUB_LOCATIONS", DEFAULT_LOCATIONS)),
         scoring_path=Path(os.getenv("LIFEHUB_SCORING", DEFAULT_SCORING)),
         preferences_path=Path(os.getenv("LIFEHUB_PREFERENCES", DEFAULT_PREFERENCES)),
+        source_subscriptions_path=Path(os.getenv("LIFEHUB_SOURCE_SUBSCRIPTIONS", DEFAULT_SOURCE_SUBSCRIPTIONS)),
         postgres_dsn=os.getenv(
             "LIFEHUB_POSTGRES_DSN",
             "host=postgres port=5432 dbname=demo user=admin password=admin",

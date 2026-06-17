@@ -28,6 +28,7 @@ REQUIRED_FILES = [
     "docs/personal-data-sources.md",
     "docs/privacy-model.md",
     "docs/source-onboarding-playbook.md",
+    "docs/source-subscriptions.md",
     "docs/telegram-data-capture.md",
     "docs/evidence/retail-cdc-evidence.md",
     "scripts/capture_clickhouse_evidence.py",
